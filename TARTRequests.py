@@ -11,3 +11,11 @@ def get_visibilities():
     if not r.status_code == 200:
         return "Error retreiving visibilities"
     return r.json()
+
+def get_latitude_and_frequency():
+    r = requests.get("http://146.232.222.105/api/v1/info")
+    if not r.status_code == 200:
+        return "Error retreiving latitude"
+    info = r.json()["info"]
+    print(info)
+    return(info["location"]["lat"], info["operating_frequency"])

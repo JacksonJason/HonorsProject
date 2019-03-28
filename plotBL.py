@@ -77,6 +77,7 @@ def sphere(ant1,ant2,A,E,D,L):
     ax.set_zlabel("Z (km)")
     ax.set_aspect("equal")
     plt.tight_layout()
+    plt.show()
 
 def makecubeplot(u,v,w):
     max_range = np.array([u.max()-u.min(), v.max()-v.min(), w.max()-w.min()]).max()
@@ -97,6 +98,7 @@ def UV(u,v,w):
     ax.set_zlabel("w (klambda)")
     ax.plot(u,v,'b--',zdir='w',zs=w.min())
     ax.plot(-u,-v,'r--',zdir='w',zs=w.min())
+    plt.show()
 
 def UVellipse(u,v,w,a,b,v0):
     fig=plt.figure(0, figsize=(8,8))
@@ -131,6 +133,7 @@ def UVellipse(u,v,w,a,b,v0):
     ax.plot(u,v,"b")
     ax.plot(-u,-v,"r")
     ax.grid(True)
+    plt.show()
 
 
 # For 4.4.2 UV Coverage Improving your coverage python notebook
@@ -215,6 +218,7 @@ def plotuv_freq(antennaPosition,L,dec,h,Nfreqs,lamb0,df):
     plt.axes().set_aspect('equal')
     plt.xlim(-mb,mb)
     plt.ylim(-mb,mb)
+    plt.show()
 
 def plotuv(antennaPos,L,dec,h,Ntimes,lamb):
     plt.clf()
@@ -235,4 +239,4 @@ def plotuv(antennaPos,L,dec,h,Ntimes,lamb):
     plt.axes().set_aspect('equal')
     plt.xlim(-mb,mb)
     plt.ylim(-mb,mb)
-    #plt.show()
+    plt.show()
