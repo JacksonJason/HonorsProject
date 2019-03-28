@@ -8,6 +8,7 @@ from matplotlib.patches import Ellipse
 import matplotlib.pylab as pl
 
 h = np.linspace(-12,12,num=600)*np.pi/12
+dec = 0
 
 # def draw_matrix(matrix):
 #     print(matrix)
@@ -23,7 +24,7 @@ h = np.linspace(-12,12,num=600)*np.pi/12
 #     ax.set_yticks([])
 #     plt.show()
 
-def get_B(b_ENU):
+def get_B(b_ENU, L):
     D = math.sqrt(np.sum((b_ENU)**2))
     A = np.arctan2(b_ENU[0],b_ENU[1])
     E = np.arcsin(b_ENU[2]/D)
@@ -31,13 +32,17 @@ def get_B(b_ENU):
     B = np.array([D * (math.cos(L)*math.sin(E) - math.sin(L) * math.cos(E)*math.cos(A)),
                 D * (math.cos(E)*math.sin(A)),
                 D * (math.sin(L)*math.sin(E) + math.cos(L) * math.cos(E)*math.cos(A))])
+    return B
 
-def plot_baseline(b_ENU, L, f, ant1, ant2):
-    B = get_B(b_ENU)
-
+def get_lambda(f):
     c = scipy.constants.c                                        # Speed of light
     lam = c/f
-    # dec = ?
+    return lam
+
+def plot_baseline(b_ENU, L, f, ant1, ant2):
+    B = get_B(b_ENU, L)
+
+    lam = get_lambda(f)
     h = np.linspace(-12,12,num=time_steps)*np.pi/12
     X = B[0]
     Y = B[1]
@@ -59,12 +64,18 @@ def plot_array(antennas):
     plt.title('TART Array Layout')
     plt.show()
 
-def plot_visibilities(u,v, b_ENU):
-    B = get_B(b_ENU)
+def plot_visibilities(u, v, b_ENU, L, f):
+    B = get_B(b_ENU, L)
+    lam = get_lambda(f)
     d = 1/lam * B[1]
     u_d = d*np.cos(h)
     v_d = d*np.sin(h)*np.sin(dec)
-
+    # X = B[0]
+    # Y = B[1]
+    # Z = B[2]
+    # u = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
+    # v = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
+    # w = lam**(-1)*(np.cos(dec)*np.cos(h)*X-np.cos(dec)*np.sin(h)*Y+np.sin(dec)*Z)
     uu, vv = np.meshgrid(u, v)
     zz = np.zeros(uu.shape).astype(complex)
     s = point_sources.shape

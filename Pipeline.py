@@ -33,4 +33,5 @@ if __name__ == "__main__":
     b12 = layout[1] - layout[2]
     L,f = TR.get_latitude_and_frequency()
     # ut.plot_baseline(b12, L, f, layout[0], layout[1])
-    make_vis_matrix()
+    visibilities = make_vis_matrix()
+    ut.plot_visibilities(0,0, b12, L, f)
