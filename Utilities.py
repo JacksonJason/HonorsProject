@@ -5,8 +5,25 @@ import math
 from mpl_toolkits.mplot3d import Axes3D
 import plotBL
 from matplotlib.patches import Ellipse
+import matplotlib.pylab as pl
 
-def plot_baseline(b_ENU, L, f, ant1, ant2):
+h = np.linspace(-12,12,num=600)*np.pi/12
+
+# def draw_matrix(matrix):
+#     print(matrix)
+#     # plt.figure()
+#     tb = pl.table(cellText=matrix, loc=(0,0), cellLoc='center')
+#     tc = tb.properties()['child_artists']
+#     # for cell in tc:
+#     #     cell.set_height(1/len(matrix))
+#     #     cell.set_width(1/len(matrix))
+#
+#     ax = pl.gca()
+#     ax.set_xticks([])
+#     ax.set_yticks([])
+#     plt.show()
+
+def get_B(b_ENU):
     D = math.sqrt(np.sum((b_ENU)**2))
     A = np.arctan2(b_ENU[0],b_ENU[1])
     E = np.arcsin(b_ENU[2]/D)
@@ -14,10 +31,13 @@ def plot_baseline(b_ENU, L, f, ant1, ant2):
     B = np.array([D * (math.cos(L)*math.sin(E) - math.sin(L) * math.cos(E)*math.cos(A)),
                 D * (math.cos(E)*math.sin(A)),
                 D * (math.sin(L)*math.sin(E) + math.cos(L) * math.cos(E)*math.cos(A))])
+
+def plot_baseline(b_ENU, L, f, ant1, ant2):
+    B = get_B(b_ENU)
+
     c = scipy.constants.c                                        # Speed of light
     lam = c/f
     # dec = ?
-    time_steps = 600
     h = np.linspace(-12,12,num=time_steps)*np.pi/12
     X = B[0]
     Y = B[1]
@@ -38,3 +58,40 @@ def plot_array(antennas):
     plt.ylabel('N-S [m]')
     plt.title('TART Array Layout')
     plt.show()
+
+def plot_visibilities(u,v, b_ENU):
+    B = get_B(b_ENU)
+    d = 1/lam * B[1]
+    u_d = d*np.cos(h)
+    v_d = d*np.sin(h)*np.sin(dec)
+
+    uu, vv = np.meshgrid(u, v)
+    zz = np.zeros(uu.shape).astype(complex)
+    s = point_sources.shape
+    for counter in range(1, s[0]+1):
+        A_i = point_sources[counter-1,0]
+        l_i = point_sources[counter-1,1]
+        m_i = point_sources[counter-1,2]
+        zz += A_i*np.exp(-2*np.pi*1j*(uu*l_i+vv*m_i))
+    zz = zz[:,::-1]
+
+    plt.figure()
+    plt.subplot(121)
+    plt.imshow(zz.real,extent=[-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10,-1*(np.amax(abs(v_d)))-10, \
+                               np.amax(abs(v_d))+10])
+    plt.plot(u_d,v_d,"k")
+    plt.xlim([-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10])
+    plt.ylim(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10)
+    plt.xlabel("u")
+    plt.ylabel("v")
+    plt.title("Real part of visibilities")
+
+    plt.subplot(122)
+    plt.imshow(zz.imag,extent=[-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10,-1*(np.amax(abs(v_d)))-10, \
+                               np.amax(abs(v_d))+10])
+    plt.plot(u_d,v_d,"k")
+    plt.xlim([-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10])
+    plt.ylim(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10)
+    plt.xlabel("u")
+    plt.ylabel("v")
+    plt.title("Imaginary part of visibilities")

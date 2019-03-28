@@ -17,5 +17,4 @@ def get_latitude_and_frequency():
     if not r.status_code == 200:
         return "Error retreiving latitude"
     info = r.json()["info"]
-    print(info)
     return(info["location"]["lat"], info["operating_frequency"])
