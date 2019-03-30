@@ -133,6 +133,7 @@ def UVellipse(u,v,w,a,b,v0):
     ax.plot(u,v,"b")
     ax.plot(-u,-v,"r")
     ax.grid(True)
+    plt.savefig('UVCoverage.png')
     plt.show()
 
 

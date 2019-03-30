@@ -62,6 +62,7 @@ def plot_array(antennas):
     plt.xlabel('E-W [m]')
     plt.ylabel('N-S [m]')
     plt.title('TART Array Layout')
+    plt.savefig('AntennaLayout.png')
     plt.show()
 
 def plot_visibilities(u, v, b_ENU, L, f):
@@ -105,6 +106,7 @@ def plot_visibilities(u, v, b_ENU, L, f):
     plt.ylabel("v")
     plt.title("Imaginary part of visibilities")
 
+    plt.savefig('Visibilities.png')
     plt.show()
 
     z = np.zeros(u_track.shape).astype(complex)
@@ -127,4 +129,5 @@ def plot_visibilities(u, v, b_ENU, L, f):
     plt.xlabel("Timeslots")
     plt.ylabel("Jy")
     plt.title("Imag: sampled visibilities")
+    plt.savefig('SampledVisibilities.png')
     plt.show()
