@@ -12,7 +12,7 @@ dec = 0
 
 # def draw_matrix(matrix):
 #     print(matrix)
-#     # plt.figure()
+#     # plt.figure(plt.show())
 #     tb = pl.table(cellText=matrix, loc=(0,0), cellLoc='center')
 #     tc = tb.properties()['child_artists']
 #     # for cell in tc:
@@ -43,7 +43,7 @@ def plot_baseline(b_ENU, L, f, ant1, ant2):
     B = get_B(b_ENU, L)
 
     lam = get_lambda(f)
-    h = np.linspace(-12,12,num=time_steps)*np.pi/12
+    # h = np.linspace(-12,12,num=time_steps)*np.pi/12
     X = B[0]
     Y = B[1]
     Z = B[2]
@@ -68,8 +68,6 @@ def plot_visibilities(u, v, b_ENU, L, f):
     B = get_B(b_ENU, L)
     lam = get_lambda(f)
     d = 1/lam * B[1]
-    u_d = d*np.cos(h)
-    v_d = d*np.sin(h)*np.sin(dec)
     # X = B[0]
     # Y = B[1]
     # Z = B[2]
@@ -88,21 +86,45 @@ def plot_visibilities(u, v, b_ENU, L, f):
 
     plt.figure()
     plt.subplot(121)
-    plt.imshow(zz.real,extent=[-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10,-1*(np.amax(abs(v_d)))-10, \
-                               np.amax(abs(v_d))+10])
-    plt.plot(u_d,v_d,"k")
-    plt.xlim([-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10])
-    plt.ylim(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10)
+    plt.imshow(zz.real,extent=[-1*(np.amax(np.abs(u)))-10, np.amax(np.abs(u))+10,-1*(np.amax(abs(v)))-10, \
+                               np.amax(abs(v))+10])
+    plt.plot(u,v,"k")
+    plt.xlim([-1*(np.amax(np.abs(u)))-10, np.amax(np.abs(u))+10])
+    plt.ylim(-1*(np.amax(abs(v)))-10, np.amax(abs(v))+10)
     plt.xlabel("u")
     plt.ylabel("v")
     plt.title("Real part of visibilities")
 
     plt.subplot(122)
-    plt.imshow(zz.imag,extent=[-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10,-1*(np.amax(abs(v_d)))-10, \
-                               np.amax(abs(v_d))+10])
-    plt.plot(u_d,v_d,"k")
-    plt.xlim([-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10])
-    plt.ylim(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10)
+    plt.imshow(zz.imag,extent=[-1*(np.amax(np.abs(u)))-10, np.amax(np.abs(u))+10,-1*(np.amax(abs(v)))-10, \
+                               np.amax(abs(v))+10])
+    plt.plot(u,v,"k")
+    plt.xlim([-1*(np.amax(np.abs(u)))-10, np.amax(np.abs(u))+10])
+    plt.ylim(-1*(np.amax(abs(v)))-10, np.amax(abs(v))+10)
     plt.xlabel("u")
     plt.ylabel("v")
     plt.title("Imaginary part of visibilities")
+
+    plt.show()
+
+    z = np.zeros(u_track.shape).astype(complex)
+    plt.figure()
+
+    s = point_sources.shape
+    for counter in range(1, s[0]+1):
+        A_i = point_sources[counter-1,0]
+        l_i = point_sources[counter-1,1]
+        m_i = point_sources[counter-1,2]
+        z += A_i*np.exp(-1*2*np.pi*1j*(u*l_i+v*m_i))
+    plt.subplot(121)
+    plt.plot(z.real)
+    plt.xlabel("Timeslots")
+    plt.ylabel("Jy")
+    plt.title("Real: sampled visibilities")
+
+    plt.subplot(122)
+    plt.plot(z.imag)
+    plt.xlabel("Timeslots")
+    plt.ylabel("Jy")
+    plt.title("Imag: sampled visibilities")
+    plt.show()
