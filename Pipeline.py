@@ -36,4 +36,4 @@ if __name__ == "__main__":
     ## JSON data.
     # ut.plot_baseline(b12, L, f, layout[0], layout[1])
     visibilities = make_vis_matrix()
-    # ut.plot_visibilities(0,0, b12, L, f)
+    ut.plot_visibilities(0,0, b12, L, f)
