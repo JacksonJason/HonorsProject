@@ -13,7 +13,7 @@ def make_vis_matrix():
     vis_matrix = np.zeros((i, j)).astype(complex)
     for v in vis:
         vis_matrix[v["i"]][v["j"]-1] = v["re"] + 1j*v["im"]
-    # ut.draw_matrix(vis_matrix)
+    ut.draw_matrix(vis_matrix)
     np.savetxt("visibilities.csv", vis_matrix, delimiter=",")
     return vis_matrix
 

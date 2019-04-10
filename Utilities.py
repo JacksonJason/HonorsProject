@@ -6,23 +6,37 @@ from mpl_toolkits.mplot3d import Axes3D
 import plotBL
 from matplotlib.patches import Ellipse
 import matplotlib.pylab as pl
-
+import plotly.plotly as py
+import plotly.graph_objs as go
+import plotly
+import matplotlib
+import plotly.io as pio
+plotly.tools.set_credentials_file(username='jj626', api_key='jArmJS8BfXBZ8iCyUb8A')
 h = np.linspace(-12,12,num=600)*np.pi/12
 dec = 0
 
-# def draw_matrix(matrix):
-#     print(matrix)
-#     # plt.figure(plt.show())
-#     tb = pl.table(cellText=matrix, loc=(0,0), cellLoc='center')
-#     tc = tb.properties()['child_artists']
-#     # for cell in tc:
-#     #     cell.set_height(1/len(matrix))
-#     #     cell.set_width(1/len(matrix))
-#
-#     ax = pl.gca()
-#     ax.set_xticks([])
-#     ax.set_yticks([])
-#     plt.show()
+def draw_matrix(matrix):
+    n = []
+    for i in range(matrix.shape[0]):
+        m = []
+        for j in range(matrix.shape[1]):
+            r = '%.6f' % matrix[i][j].real
+            im = '%.6f' % matrix[i][j].imag
+            if "-" in im:
+                m.append(r + im + "i")
+            else:
+                m.append(r + "+" + im + "i")
+        n.append(m)
+    m = np.array(n)
+
+    fig=plt.figure(figsize=(m.shape[0]*1, m.shape[1]*1))
+    ax = fig.add_subplot(111)
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    the_table = ax.table(cellText=m,
+              loc='center')
+    the_table.set_zorder(10)
+    plt.savefig("Matrix.svg")
 
 def get_B(b_ENU, L):
     D = math.sqrt(np.sum((b_ENU)**2))
@@ -63,11 +77,11 @@ def plot_array(antennas):
     plt.ylabel('N-S [m]')
     plt.title('TART Array Layout')
     plt.savefig('AntennaLayout.png')
-    plt.show()
+    # plt.show()
 
 def plot_visibilities(u, v, b_ENU, L, f):
 
-    ################
+    #################################################################################################
     RA_sources = np.array([-4 + 44/60.0 + 6.686/3600, -4 + 44/60.0 + 6.686/3600])
     DEC_sources = np.array([-74 + 39/60.0 + 37.481/3600, -73 + 39.0/60.0 + 37.298/3600])
     Flux_sources_labels = np.array(["1 Jy","0.2 Jy"])
@@ -87,10 +101,10 @@ def plot_visibilities(u, v, b_ENU, L, f):
 
     point_sources = np.zeros((len(RA_sources),3))
     point_sources[:,0] = Flux_sources
-    point_sources[:,1] = l[1:]
-    point_sources[:,2] = m[1:]
+    point_sources[:,1] = l[0:]
+    point_sources[:,2] = m[0:]
     dec = DEC_sources[0]
-    ################
+    #################################################################################################
 
     B = get_B(b_ENU, L)
     lam = get_lambda(f)
@@ -134,7 +148,7 @@ def plot_visibilities(u, v, b_ENU, L, f):
     plt.ylabel("v")
     plt.title("Imaginary part of visibilities")
     plt.savefig('Visibilities.png')
-    plt.show()
+    # plt.show()
 
     u_track = u_d
     v_track = v_d
@@ -159,4 +173,4 @@ def plot_visibilities(u, v, b_ENU, L, f):
     plt.ylabel("Jy")
     plt.title("Imag: sampled visibilities")
     plt.savefig('SampledVisibilities.png')
-    plt.show()
+    # plt.show()
