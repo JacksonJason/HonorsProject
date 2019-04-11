@@ -1,21 +1,33 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.constants
 import math
 from mpl_toolkits.mplot3d import Axes3D
-import plotBL
 from matplotlib.patches import Ellipse
 import matplotlib.pylab as pl
-import plotly.plotly as py
-import plotly.graph_objs as go
-import plotly
-import matplotlib
-import plotly.io as pio
-plotly.tools.set_credentials_file(username='jj626', api_key='jArmJS8BfXBZ8iCyUb8A')
+
 h = np.linspace(-12,12,num=600)*np.pi/12
 dec = 0
 
 def draw_matrix(matrix):
+    plt.figure()
+    plt.subplot(121)
+    plt.imshow(matrix.real)
+    # plt.xlabel("Timeslots")
+    # plt.ylabel("Jy")
+    plt.title("Real: visibilities")
+
+    plt.subplot(122)
+    plt.imshow(matrix.imag)
+    # plt.xlabel("Timeslots")
+    # plt.ylabel("Jy")
+    plt.title("Imag: visibilities")
+    plt.savefig('Plots/Antenna_Visibilities.png')
+    plt.close()
+
+def tabulate_matrix(matrix):
     n = []
     for i in range(matrix.shape[0]):
         m = []
@@ -36,7 +48,8 @@ def draw_matrix(matrix):
     the_table = ax.table(cellText=m,
               loc='center')
     the_table.set_zorder(10)
-    plt.savefig("Matrix.svg")
+    plt.title("Visibility Matrix")
+    plt.savefig("Plots/Matrix.svg")
 
 def get_B(b_ENU, L):
     D = math.sqrt(np.sum((b_ENU)**2))
@@ -49,9 +62,44 @@ def get_B(b_ENU, L):
     return B
 
 def get_lambda(f):
-    c = scipy.constants.c                                        # Speed of light
+    c = scipy.constants.c
     lam = c/f
     return lam
+
+# This code is taken from the fundamentals of interferometry notebook.
+def UVellipse(u,v,w,a,b,v0):
+    fig=plt.figure(0, figsize=(8,8))
+
+    e1=Ellipse(xy=np.array([0,v0]),width=2*a,height=2*b,angle=0)
+    e2=Ellipse(xy=np.array([0,-v0]),width=2*a,height=2*b,angle=0)
+
+    ax=fig.add_subplot(111,aspect="equal")
+
+    ax.plot([0],[v0],"go")
+    ax.plot([0],[-v0],"go")
+    ax.plot(u[0],v[0],"bo")
+    ax.plot(u[-1],v[-1],"bo")
+
+    ax.plot(-u[0],-v[0],"ro")
+    ax.plot(-u[-1],-v[-1],"ro")
+
+    ax.add_artist(e1)
+    e1.set_lw(1)
+    e1.set_ls("--")
+    e1.set_facecolor("w")
+    e1.set_edgecolor("b")
+    e1.set_alpha(0.5)
+    ax.add_artist(e2)
+
+    e2.set_lw(1)
+    e2.set_ls("--")
+    e2.set_facecolor("w")
+    e2.set_edgecolor("r")
+    e2.set_alpha(0.5)
+    ax.plot(u,v,"b")
+    ax.plot(-u,-v,"r")
+    ax.grid(True)
+    plt.savefig('Plots/UVCoverage.png')
 
 def plot_baseline(b_ENU, L, f, ant1, ant2):
     B = get_B(b_ENU, L)
@@ -68,16 +116,16 @@ def plot_baseline(b_ENU, L, f, ant1, ant2):
     a=np.sqrt(X**2+Y**2)/lam # major axis
     b=a*np.sin(dec)              # minor axis
     v0=(Z/lam)*np.cos(dec)  # center of ellipse
-    plotBL.UVellipse(u,v,w,a,b,v0)
+    UVellipse(u,v,w,a,b,v0)
 
-def plot_array(antennas):
+def plot_array(antennas, name):
+    plt.figure()
     plt.scatter(antennas[:,0], antennas[:,1])
     plt.grid(True)
     plt.xlabel('E-W [m]')
     plt.ylabel('N-S [m]')
-    plt.title('TART Array Layout')
-    plt.savefig('AntennaLayout.png')
-    # plt.show()
+    plt.title(name + ' Array Layout')
+    plt.savefig('Plots/AntennaLayout.png')
 
 def plot_visibilities(u, v, b_ENU, L, f):
 
@@ -147,8 +195,8 @@ def plot_visibilities(u, v, b_ENU, L, f):
     plt.xlabel("u")
     plt.ylabel("v")
     plt.title("Imaginary part of visibilities")
-    plt.savefig('Visibilities.png')
-    # plt.show()
+    plt.savefig('Plots/Visibilities.png')
+    plt.close()
 
     u_track = u_d
     v_track = v_d
@@ -172,5 +220,5 @@ def plot_visibilities(u, v, b_ENU, L, f):
     plt.xlabel("Timeslots")
     plt.ylabel("Jy")
     plt.title("Imag: sampled visibilities")
-    plt.savefig('SampledVisibilities.png')
-    # plt.show()
+    plt.savefig('Plots/SampledVisibilities.png')
+    plt.close()
