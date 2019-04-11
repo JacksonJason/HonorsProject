@@ -1,0 +1,35 @@
+<html>
+  {% block head %}
+    <link href="/static/style.css" rel="stylesheet">
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script type="text/javascript">
+      $(document).ready(function() {
+        $("#generate_graphs").click(function(e) {
+          $.get("/generate_graphs")
+           .done(function(string) {
+             var unique = $.now();
+             $('#antenna').attr('src', 'static/AntennaLayout.png?' + unique);
+             $('#visibilities').attr('src', 'static/Antenna_Visibilities.png?' + unique);
+             alert("done");
+          });
+          e.preventDefault();
+        });
+      });
+    </script>
+  {% endblock %}
+  {% block body %}
+    <div class="col-sm-12">
+      <h1>{{ target }}</h1>
+      <button type="submit" id="generate_graphs">Generate new graphs</button>
+      <br>
+    </div>
+    <br>
+    <div class="col-sm-6">
+      <img src="static/AntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
+    </div>
+    <div class="col-sm-6">
+      <img src="static/Antenna_Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
+    </div> <br>
+  {% endblock %}
+</html>
