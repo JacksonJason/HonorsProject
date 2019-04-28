@@ -6,27 +6,49 @@
     <script type="text/javascript">
       $(document).ready(function() {
         $("#generate_graphs").click(function(e) {
-          $.get("/generate_graphs")
+          $.post("/generate_graphs",{input_file:$("#input_file").val()})
            .done(function(string) {
              var unique = $.now();
-             $('#antenna').attr('src', 'static/AntennaLayout.png?' + unique);
+             $('#antenna').attr('src', 'static/TARTAntennaLayout.png?' + unique);
              $('#visibilities').attr('src', 'static/Antenna_Visibilities.png?' + unique);
-             alert("done");
+             alert("Graphs Generated");
           });
           e.preventDefault();
         });
       });
+      // $(document).ready( function () {
+  		// $('#form').submit( function () {
+      //   e.preventDefault();
+
+        // var input_file = $("#input_file").val().split("\\");
+        // var input = input_file[input_file.length()]
+        // $.post('generate_graphs', {input_file: }, function(data) { });
+
+  			// var formdata = $(this).serialize();
+  			// $.post({
+  			//     type: "POST",
+  			//     url: "generate_graphs",
+  			//     data: formdata,
+  			//  });
+  		// 	return false;
+  		// });
+  	// });
     </script>
   {% endblock %}
   {% block body %}
     <div class="col-sm-12">
       <h1>{{ target }}</h1>
+      <!-- <form method="post" action="generate_graphs" enctype="multipart/form-data" id="form">
+          <input type="file" name="input_file" id="input_file">
+          <button type="submit" />Generate new graphs
+      </form> -->
+      <input type="file" name="input_file" id="input_file">
       <button type="submit" id="generate_graphs">Generate new graphs</button>
       <br>
     </div>
     <br>
     <div class="col-sm-6">
-      <img src="static/AntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
+      <img src="static/TARTAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
     </div>
     <div class="col-sm-6">
       <img src="static/Antenna_Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">

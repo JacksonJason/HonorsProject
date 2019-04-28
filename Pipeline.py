@@ -3,6 +3,7 @@ import numpy as np
 import Utilities as ut
 import cherrypy
 import os
+import json
 from jinja2 import Environment, FileSystemLoader
 env = Environment(loader=FileSystemLoader('html'))
 
@@ -42,22 +43,44 @@ class pipeline(object):
         return i+1,j
 
     @cherrypy.expose
-    def generate_graphs(self):
-        visibilities = self.make_vis_matrix()
-        ut.plot_array(layout, "TART")
-        b12 = layout[1] - layout[2]
-        ## Need Declination before I can continue propely. Need to figure out how to extract that from the
-        ## JSON data.
-        ut.plot_baseline(b12, L, f, layout[0], layout[1])
-        ut.plot_visibilities(0,0, b12, L, f)
+    def generate_graphs(self, input_file=None):
+        upload_path = os.path.dirname(__file__)
+        if input_file is not "":
+            input_file = input_file.split("\\")[-1]
+            input_file = os.path.normpath(
+            os.path.join(upload_path, input_file))
+            with open(input_file) as outfile:
+                json_antenna = json.load(outfile)
+            custom_layout = np.array(json_antenna['antennas'])
+            ut.plot_array(custom_layout, "Custom")
+            b12 = custom_layout[1] - custom_layout[0]
+            custom_L = json_antenna['latitude']
+            custom_L = (np.pi/180)* (custom_L[0] + custom_L[1]/60. + custom_L[2]/3600.)
+            custom_f = json_antenna['frequency']
+            custom_f = custom_f  * 10**9  
+            sha = json_antenna['sha']
+            eha = json_antenna['eha']
+            dec = json_antenna['center_dec']
+            dec = dec[0] + dec[1]/60. + dec[2]/3600.
+            # asc = json_antenna['center_asc']
+            ut.plot_baseline(b12, custom_L, custom_f, sha, eha, dec)
+            ut.plot_visibilities(b12, custom_L, custom_f, sha, eha)
+
+        # visibilities = self.make_vis_matrix()
+        # ut.plot_array(layout, "TART")
+        # b12 = layout[1] - layout[2]
+        # ## Need Declination before I can continue propely. Need to figure out how to extract that from the
+        # ## JSON data.
+        # ut.plot_baseline(b12, L, f, layout[0], layout[1])
+        # ut.plot_visibilities(0,0, b12, L, f)
 
     @cherrypy.expose
     def index(self):
         tmpl = env.get_template('index.html')
-        global layout
-        layout = self.get_antenna_layout()
-        global L, f
-        L,f = TR.get_latitude_and_frequency()
+        # global layout
+        # layout = self.get_antenna_layout()
+        # global L, f
+        # L,f = TR.get_latitude_and_frequency()
         return tmpl.render(target='Imaging pipeline')
 
 if __name__ == '__main__':

@@ -7,9 +7,11 @@ import math
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Ellipse
 import matplotlib.pylab as pl
+import Tigger
+model = Tigger.load("example.lsm.html")
 
-h = np.linspace(-12,12,num=600)*np.pi/12
-dec = 0
+# h = np.linspace(-12,12,num=600)*np.pi/12
+# dec = 0
 
 def draw_matrix(matrix):
     plt.figure()
@@ -55,7 +57,6 @@ def get_B(b_ENU, L):
     D = math.sqrt(np.sum((b_ENU)**2))
     A = np.arctan2(b_ENU[0],b_ENU[1])
     E = np.arcsin(b_ENU[2]/D)
-    # plotBL.sphere(ant1,ant2,A,E,D,L)
     B = np.array([D * (math.cos(L)*math.sin(E) - math.sin(L) * math.cos(E)*math.cos(A)),
                 D * (math.cos(E)*math.sin(A)),
                 D * (math.sin(L)*math.sin(E) + math.cos(L) * math.cos(E)*math.cos(A))])
@@ -101,11 +102,12 @@ def UVellipse(u,v,w,a,b,v0):
     ax.grid(True)
     plt.savefig('Plots/UVCoverage.png')
 
-def plot_baseline(b_ENU, L, f, ant1, ant2):
+def plot_baseline(b_ENU, L, f, h0, h1, dec):
+    # dec = model.dec0
     B = get_B(b_ENU, L)
 
     lam = get_lambda(f)
-    # h = np.linspace(-12,12,num=time_steps)*np.pi/12
+    h = np.linspace(h0,h1,num=600)*np.pi/12
     X = B[0]
     Y = B[1]
     Z = B[2]
@@ -125,33 +127,63 @@ def plot_array(antennas, name):
     plt.xlabel('E-W [m]')
     plt.ylabel('N-S [m]')
     plt.title(name + ' Array Layout')
-    plt.savefig('Plots/AntennaLayout.png')
+    plt.savefig('Plots/' + name + 'AntennaLayout.png')
 
-def plot_visibilities(u, v, b_ENU, L, f):
+def plot_visibilities(b_ENU, L, f, h0, h1):
+    h = np.linspace(h0,h1,num=600)*np.pi/12
 
     #################################################################################################
-    RA_sources = np.array([-4 + 44/60.0 + 6.686/3600, -4 + 44/60.0 + 6.686/3600])
-    DEC_sources = np.array([-74 + 39/60.0 + 37.481/3600, -73 + 39.0/60.0 + 37.298/3600])
-    Flux_sources_labels = np.array(["1 Jy","0.2 Jy"])
-    Flux_sources = np.array([1,0.2]) #in Jy
+    RA_sources = []
+    DEC_sources = []
+    Flux_sources_labels = []
+    Flux_sources = []
+    for val in model.sources:
+        RA_sources.append(val.pos.ra)
+        DEC_sources.append(val.pos.dec)
+        Flux_sources_labels.append(str(val.flux.I))
+        Flux_sources.append(val.flux.I)
+    RA_sources = np.array(RA_sources)
+    DEC_sources = np.array(DEC_sources)
+    Flux_sources_labels = np.array(Flux_sources_labels)
+    Flux_sources = np.array(Flux_sources)
+
+    ra_0 = model.ra0
+    dec_0 = model.dec0
+    ra_0_rad = ra_0 * (np.pi/12)
+    dec_0_rad = dec_0 * (np.pi/180)
+
     step_size = 200
-    print("Phase center     Source 1")
-    print("RA="+str(RA_sources))
-    print("DEC="+str(DEC_sources))
     RA_rad = np.array(RA_sources)*(np.pi/12)
     DEC_rad = np.array(DEC_sources)*(np.pi/180)
-    RA_delta_rad = RA_rad-RA_rad[0]
+    RA_delta_rad = RA_rad-ra_0_rad
+
 
     l = np.cos(DEC_rad)*np.sin(RA_delta_rad)
-    m = (np.sin(DEC_rad)*np.cos(DEC_rad[0])-np.cos(DEC_rad)*np.sin(DEC_rad[0])*np.cos(RA_delta_rad))
-    print("l=",l)
-    print("m=",m)
+    m = (np.sin(DEC_rad)*np.cos(dec_0_rad)-np.cos(DEC_rad)*np.sin(dec_0_rad)*np.cos(RA_delta_rad))
 
     point_sources = np.zeros((len(RA_sources),3))
     point_sources[:,0] = Flux_sources
     point_sources[:,1] = l[0:]
     point_sources[:,2] = m[0:]
-    dec = DEC_sources[0]
+    dec = dec_0
+
+    # Plot sky model in L and M
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111)
+    plt.xlim([-4,4])
+    plt.ylim([-4,4])
+    plt.xlabel("$l$ [degrees]")
+    plt.ylabel("$m$ [degrees]")
+    plt.plot(l[0],m[0],"bx")
+    plt.plot(l[1:]*(180/np.pi),m[1:]*(180/np.pi),"ro")
+    counter = 1
+    for xy in zip(l[1:]*(180/np.pi)+0.25, m[1:]*(180/np.pi)+0.25):
+        ax.annotate(Flux_sources_labels[counter], xy=xy, textcoords='offset points',horizontalalignment='right',
+                    verticalalignment='bottom')
+        counter = counter + 1
+
+    plt.grid()
+    plt.savefig("Plots/SkyModel.png")
     #################################################################################################
 
     B = get_B(b_ENU, L)
