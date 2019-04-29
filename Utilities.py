@@ -8,7 +8,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Ellipse
 import matplotlib.pylab as pl
 import Tigger
-model = Tigger.load("example.lsm.html")
 
 def draw_matrix(matrix):
     plt.figure()
@@ -127,9 +126,9 @@ def plot_array(antennas, name):
     plt.title(name + ' Array Layout')
     plt.savefig('Plots/' + name + 'AntennaLayout.png', transparent=True)
 
-def plot_visibilities(b_ENU, L, f, h0, h1):
+def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     h = np.linspace(h0,h1,num=600)*np.pi/12
-
+    model = Tigger.load(model_name)
     #################################################################################################
     RA_sources = []
     DEC_sources = []

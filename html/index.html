@@ -9,13 +9,31 @@
     <script type="text/javascript">
       $(document).ready(function() {
         $("#generate_graphs").click(function(e) {
-          $.post("/generate_graphs",{input_file:$("#input_file").val()})
+          $.post("/generate_graphs")
            .done(function(string) {
              var unique = $.now();
              $('#antenna').attr('src', 'static/TARTAntennaLayout.png?' + unique);
              $('#visibilities').attr('src', 'static/Antenna_Visibilities.png?' + unique);
-             alert("Graphs Generated");
+             alert("SUCCESS: Graphs Generated");
           });
+          e.preventDefault();
+        });
+      });
+      $(document).ready(function() {
+        $("#generate_custom_graphs").click(function(e) {
+          if ($("#input_file").val() != "") {
+            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val()})
+             .done(function(string) {
+               var unique = $.now();
+               $('#c_antenna').attr('src', 'static/CustomAntennaLayout.png?' + unique);
+               $('#c_uv').attr('src', 'static/UVCoverage.png?' + unique);
+               $('#c_sv').attr('src', 'static/SampledVisibilities.png?' + unique);
+               $('#c_visibilities').attr('src', 'static/Visibilities.png?' + unique);
+               alert("SUCCESS: Graphs Generated");
+            });
+          } else {
+            alert("FAILURE: Please select a array layout and lsm file")
+          }
           e.preventDefault();
         });
       });
@@ -36,6 +54,27 @@
   		// 	return false;
   		// });
   	// });
+    $(document).ready(function() {
+        $('input[id="input_file"]').change(function() {
+        path = $("#input_file").val();
+        p = path.split("\\");
+        v = p[p.length - 1];
+        btn = document.getElementById('input_file');
+        document.getElementById('input_label').innerText = v;
+        document.getElementById('input_label').appendChild(btn);
+      });
+    });
+
+    $(document).ready(function() {
+        $('input[id="lsm_file"]').change(function() {
+        path = $("#lsm_file").val()
+        p = path.split("\\")
+        v = p[p.length - 1]
+        btn = document.getElementById('lsm_file');
+        document.getElementById('lsm_label').innerText = v
+        document.getElementById('lsm_label').appendChild(btn);
+      });
+    });
     </script>
     <style>
       d {
@@ -49,6 +88,23 @@
       .collapse {
         background-color: #e5e5e5;
       }
+
+      button {
+        margin:5;
+      }
+
+      label {
+        position: relative;
+        overflow: hidden;
+        margin: 5;
+      }
+      input {
+        position: absolute;
+        font-size: 50px;
+        opacity: 0;
+        right: 0;
+        top: 0;
+      }
     </style>
   {% endblock %}
   {% block body %}
@@ -60,19 +116,18 @@
           <input type="file" name="input_file" id="input_file">
           <button type="submit" />Generate new graphs
       </form> -->
-      <input type="file" name="input_file" id="input_file">
-      <button type="submit" id="generate_graphs">Generate new graphs</button>
-      <br>
     <br>
     <div class="panel-group" id="accordion">
      <div class="panel panel-default">
        <div class="panel-heading">
          <h4 class="panel-title">
-           <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+           <a data-toggle="collapse" href="#collapse1">
            TART</a>
          </h4>
        </div>
        <div id="collapse1" class="panel-collapse collapse">
+         <button type="submit" id="generate_graphs" class="btn btn-default btn-primary">Generate new graphs</button>
+         <br>
          <div class="col-sm-6">
            <img src="static/TARTAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
          </div>
@@ -84,22 +139,31 @@
      <div class="panel panel-default">
        <div class="panel-heading">
          <h4 class="panel-title">
-           <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+           <a data-toggle="collapse" href="#collapse2">
            CUSTOM LAYOUT</a>
          </h4>
        </div>
        <div id="collapse2" class="panel-collapse collapse">
+         <label class="btn btn-default btn-primary" id="input_label">
+           AntennaLayout <input type="file" name="input_file" id="input_file">
+         </label>
+         <!-- <input type="file" name="input_file" id="input_file"> -->
+         <label class="btn btn-default btn-primary" id="lsm_label">
+           LSM File <input type="file" name="lsm_file" id="lsm_file">
+         </label><br>
+         <!-- <input type="file" name="lsm_file" id="lsm_file"> -->
+         <button type="submit" id="generate_custom_graphs" class="btn btn-default btn-primary">Generate custom layout graphs</button><br>
          <div class="col-sm-6">
-           <img src="static/CustomAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
+           <img src="static/CustomAntennaLayout.png" alt="image alt text" id=c_antenna  width="512" height="384">
          </div>
          <div class="col-sm-6">
-           <img src="static/UVCoverage.png" alt="image alt text" id=visibilities width="400" height="400">
+           <img src="static/UVCoverage.png" alt="image alt text" id=c_uv width="400" height="400">
          </div> <br>
          <div class="col-sm-6">
-           <img src="static/SampledVisibilities.png" alt="image alt text" id=antenna  width="512" height="384">
+           <img src="static/SampledVisibilities.png" alt="image alt text" id=c_sv  width="512" height="384">
          </div>
          <div class="col-sm-6">
-           <img src="static/Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
+           <img src="static/Visibilities.png" alt="image alt text" id=c_visibilities width="512" height="384">
          </div> <br>
        </div>
      </div>
@@ -113,5 +177,6 @@
     <div class="col-sm-6">
       <img src="static/Antenna_Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
     </div> <br> -->
+
   {% endblock %}
 </html>
