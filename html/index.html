@@ -1,8 +1,11 @@
 <html>
   {% block head %}
     <link href="/static/style.css" rel="stylesheet">
-    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <!-- <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script> -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css"> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
     <script type="text/javascript">
       $(document).ready(function() {
         $("#generate_graphs").click(function(e) {
@@ -34,9 +37,24 @@
   		// });
   	// });
     </script>
+    <style>
+      d {
+        border: 2px solid black;
+        margin: 2;
+      }
+      body {
+        background-color: #e5e5e5;
+      }
+
+      .collapse {
+        background-color: #e5e5e5;
+      }
+    </style>
   {% endblock %}
   {% block body %}
-    <div class="col-sm-12">
+  <div class="col-sm-1">
+  </div>
+    <d class="col-sm-10">
       <h1>{{ target }}</h1>
       <!-- <form method="post" action="generate_graphs" enctype="multipart/form-data" id="form">
           <input type="file" name="input_file" id="input_file">
@@ -45,13 +63,55 @@
       <input type="file" name="input_file" id="input_file">
       <button type="submit" id="generate_graphs">Generate new graphs</button>
       <br>
-    </div>
     <br>
-    <div class="col-sm-6">
+    <div class="panel-group" id="accordion">
+     <div class="panel panel-default">
+       <div class="panel-heading">
+         <h4 class="panel-title">
+           <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+           TART</a>
+         </h4>
+       </div>
+       <div id="collapse1" class="panel-collapse collapse">
+         <div class="col-sm-6">
+           <img src="static/TARTAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
+         </div>
+         <div class="col-sm-6">
+           <img src="static/Antenna_Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
+         </div> <br>
+       </div>
+     </div>
+     <div class="panel panel-default">
+       <div class="panel-heading">
+         <h4 class="panel-title">
+           <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+           CUSTOM LAYOUT</a>
+         </h4>
+       </div>
+       <div id="collapse2" class="panel-collapse collapse">
+         <div class="col-sm-6">
+           <img src="static/CustomAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
+         </div>
+         <div class="col-sm-6">
+           <img src="static/UVCoverage.png" alt="image alt text" id=visibilities width="400" height="400">
+         </div> <br>
+         <div class="col-sm-6">
+           <img src="static/SampledVisibilities.png" alt="image alt text" id=antenna  width="512" height="384">
+         </div>
+         <div class="col-sm-6">
+           <img src="static/Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
+         </div> <br>
+       </div>
+     </div>
+    </div>
+    </d>
+    <div class="col-sm-1">
+    </div>
+    <!-- <div class="col-sm-6">
       <img src="static/TARTAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
     </div>
     <div class="col-sm-6">
       <img src="static/Antenna_Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
-    </div> <br>
+    </div> <br> -->
   {% endblock %}
 </html>

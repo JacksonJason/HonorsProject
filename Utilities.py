@@ -10,9 +10,6 @@ import matplotlib.pylab as pl
 import Tigger
 model = Tigger.load("example.lsm.html")
 
-# h = np.linspace(-12,12,num=600)*np.pi/12
-# dec = 0
-
 def draw_matrix(matrix):
     plt.figure()
     plt.subplot(121)
@@ -26,7 +23,7 @@ def draw_matrix(matrix):
     # plt.xlabel("Timeslots")
     # plt.ylabel("Jy")
     plt.title("Imag: visibilities")
-    plt.savefig('Plots/Antenna_Visibilities.png')
+    plt.savefig('Plots/Antenna_Visibilities.png', transparent=True)
     plt.close()
 
 def tabulate_matrix(matrix):
@@ -51,7 +48,7 @@ def tabulate_matrix(matrix):
               loc='center')
     the_table.set_zorder(10)
     plt.title("Visibility Matrix")
-    plt.savefig("Plots/Matrix.svg")
+    plt.savefig("Plots/Matrix.svg", transparent=True)
 
 def get_B(b_ENU, L):
     D = math.sqrt(np.sum((b_ENU)**2))
@@ -100,7 +97,8 @@ def UVellipse(u,v,w,a,b,v0):
     ax.plot(u,v,"b")
     ax.plot(-u,-v,"r")
     ax.grid(True)
-    plt.savefig('Plots/UVCoverage.png')
+    plt.title("UV Coverage")
+    plt.savefig('Plots/UVCoverage.png', transparent=True)
 
 def plot_baseline(b_ENU, L, f, h0, h1, dec):
     # dec = model.dec0
@@ -127,7 +125,7 @@ def plot_array(antennas, name):
     plt.xlabel('E-W [m]')
     plt.ylabel('N-S [m]')
     plt.title(name + ' Array Layout')
-    plt.savefig('Plots/' + name + 'AntennaLayout.png')
+    plt.savefig('Plots/' + name + 'AntennaLayout.png', transparent=True)
 
 def plot_visibilities(b_ENU, L, f, h0, h1):
     h = np.linspace(h0,h1,num=600)*np.pi/12
@@ -183,7 +181,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1):
         counter = counter + 1
 
     plt.grid()
-    plt.savefig("Plots/SkyModel.png")
+    plt.savefig("Plots/SkyModel.png", transparent=True)
     #################################################################################################
 
     B = get_B(b_ENU, L)
@@ -194,7 +192,6 @@ def plot_visibilities(b_ENU, L, f, h0, h1):
     Z = B[2]
     u_d = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
     v_d = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
-    # delta = 60*(np.pi/180) #Declination in degrees
     u = np.linspace(-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10, num=step_size, endpoint=True)
     v = np.linspace(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10, num=step_size, endpoint=True)
     uu, vv = np.meshgrid(u, v)
@@ -227,7 +224,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1):
     plt.xlabel("u")
     plt.ylabel("v")
     plt.title("Imaginary part of visibilities")
-    plt.savefig('Plots/Visibilities.png')
+    plt.savefig('Plots/Visibilities.png', transparent=True)
     plt.close()
 
     u_track = u_d
@@ -252,5 +249,5 @@ def plot_visibilities(b_ENU, L, f, h0, h1):
     plt.xlabel("Timeslots")
     plt.ylabel("Jy")
     plt.title("Imag: sampled visibilities")
-    plt.savefig('Plots/SampledVisibilities.png')
+    plt.savefig('Plots/SampledVisibilities.png', transparent=True)
     plt.close()
