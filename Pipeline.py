@@ -48,7 +48,7 @@ class pipeline(object):
             lsm_file = lsm_file.split("\\")[-1]
             input_file = os.path.normpath(
             os.path.join(upload_path, input_file))
-            with open(input_file) as outfile:
+            with open("Antenna_Layouts/" + input_file) as outfile:
                 json_antenna = json.load(outfile)
             custom_layout = np.array(json_antenna['antennas'])
             ut.plot_array(custom_layout, "Custom")

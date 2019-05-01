@@ -48,6 +48,7 @@ def tabulate_matrix(matrix):
     the_table.set_zorder(10)
     plt.title("Visibility Matrix")
     plt.savefig("Plots/Matrix.svg", transparent=True)
+    plt.close()
 
 def get_B(b_ENU, L):
     D = math.sqrt(np.sum((b_ENU)**2))
@@ -98,6 +99,7 @@ def UVellipse(u,v,w,a,b,v0):
     ax.grid(True)
     plt.title("UV Coverage")
     plt.savefig('Plots/UVCoverage.png', transparent=True)
+    plt.close()
 
 def plot_baseline(b_ENU, L, f, h0, h1, dec):
     # dec = model.dec0
@@ -125,6 +127,7 @@ def plot_array(antennas, name):
     plt.ylabel('N-S [m]')
     plt.title(name + ' Array Layout')
     plt.savefig('Plots/' + name + 'AntennaLayout.png', transparent=True)
+    plt.close()
 
 def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     h = np.linspace(h0,h1,num=600)*np.pi/12
@@ -181,6 +184,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
 
     plt.grid()
     plt.savefig("Plots/SkyModel.png", transparent=True)
+    plt.close()
     #################################################################################################
 
     B = get_B(b_ENU, L)
