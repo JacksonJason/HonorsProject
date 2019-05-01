@@ -61,7 +61,7 @@ class pipeline(object):
             eha = json_antenna['eha']
             dec = json_antenna['center_dec']
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
-            # asc = json_antenna['center_asc']
+            # asc = json_antenna['center_asc'] 
             ut.plot_baseline(b12, custom_L, custom_f, sha, eha, dec)
             ut.plot_visibilities(b12, custom_L, custom_f, sha, eha, lsm_file)
 
