@@ -132,7 +132,8 @@ def plot_array(antennas, name):
 def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     h = np.linspace(h0,h1,num=600)*np.pi/12
     model = Tigger.load(model_name)
-    #################################################################################################
+    #####################################    print(zz.shape)
+############################################################
     RA_sources = []
     DEC_sources = []
     Flux_sources_labels = []
@@ -168,23 +169,24 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     dec = dec_0
 
     # Plot sky model in L and M
-    fig = plt.figure(figsize=(10,10))
-    ax = fig.add_subplot(111)
-    plt.xlim([-4,4])
-    plt.ylim([-4,4])
-    plt.xlabel("$l$ [degrees]")
-    plt.ylabel("$m$ [degrees]")
-    plt.plot(l[0],m[0],"bx")
-    plt.plot(l[1:]*(180/np.pi),m[1:]*(180/np.pi),"ro")
-    counter = 1
-    for xy in zip(l[1:]*(180/np.pi)+0.25, m[1:]*(180/np.pi)+0.25):
-        ax.annotate(Flux_sources_labels[counter], xy=xy, textcoords='offset points',horizontalalignment='right',
-                    verticalalignment='bottom')
-        counter = counter + 1
-
-    plt.grid()
-    plt.savefig("Plots/SkyModel.png", transparent=True)
-    plt.close()
+    # fig = plt.figure(figsize=(10,10))
+    # ax = fig.add_subplot(111)
+    # plt.xlim([-4,4])
+    # plt.ylim([-4,4])
+    # plt.xlabel("$l$ [degrees]")
+    # plt.ylabel("$m$ [degrees]")
+    # plt.plot(l[0],m[0],"bx")
+    # plt.plot(l[1:]*(180/np.pi),m[1:]*(180/np.pi),"ro")
+    # counter = 1
+    # for xy in zip(l[1:]*(180/np.pi)+0.25, m[1:]*(180/np.pi)+0.25):
+    #     ax.annotate(Flux_sources_labels[counter], xy=xy, textcoords='offset points',horizontalalignment='right',
+    #                 verticalalignment='bottom')
+    #     counter = counter + 1
+    #
+    # plt.grid()
+    # plt.title("Sky Model")
+    # plt.savefig("Plots/SkyModel.png", transparent=True)
+    # plt.close()
     #################################################################################################
 
     B = get_B(b_ENU, L)
@@ -211,7 +213,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     plt.subplot(121)
     plt.imshow(zz.real,extent=[-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10,-1*(np.amax(abs(v_d)))-10, \
                                np.amax(abs(v_d))+10])
-    plt.plot(u_d,v_d,"k")
+    # plt.plot(u_d,v_d,"k")
     plt.xlim([-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10])
     plt.ylim(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10)
     plt.xlabel("u")
@@ -221,11 +223,10 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     plt.subplot(122)
     plt.imshow(zz.imag,extent=[-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10,-1*(np.amax(abs(v_d)))-10, \
                                np.amax(abs(v_d))+10])
-    plt.plot(u_d,v_d,"k")
+    # plt.plot(u_d,v_d,"k")
     plt.xlim([-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10])
     plt.ylim(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10)
     plt.xlabel("u")
-    plt.ylabel("v")
     plt.title("Imaginary part of visibilities")
     plt.savefig('Plots/Visibilities.png', transparent=True)
     plt.close()
@@ -250,7 +251,61 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     plt.subplot(122)
     plt.plot(z.imag)
     plt.xlabel("Timeslots")
-    plt.ylabel("Jy")
     plt.title("Imag: sampled visibilities")
     plt.savefig('Plots/SampledVisibilities.png', transparent=True)
+    plt.close()
+
+    image_visibilities(zz)
+    ####################################################################################
+    # model_sky = np.zeros([Nx,Ny])
+    # for i in range(len(RA_sources)):
+    #     model_sky[int(np.random.rand()*Nx),int(np.random.rand()*Ny)] = Flux_sources[i]
+    #
+    # plt.figure(figsize=(15, 15))
+    # plt.subplot(131)
+    # plt.title("Model sky")
+    # plt.ticklabel_format(useOffset=False)
+    # plt.imshow(model_sky,cmap="gray", extent=[RA - Nx / 2 * cell_size_l, RA + Nx / 2 * cell_size_l,
+    #                                           DECLINATION - Ny / 2 * cell_size_m, DECLINATION + Ny / 2 * cell_size_m])
+    # plt.xlabel("RA")
+    # plt.ylabel("DEC")
+    # plt.savefig("Plots/SkyModel.png", transparent=True)
+    # plt.close()
+
+    # Plot sky model in L and M
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111)
+    plt.xlim([-4,4])
+    plt.ylim([-4,4])
+    plt.xlabel("$l$ [degrees]")
+    plt.ylabel("$m$ [degrees]")
+    max_flux = max(Flux_sources)
+    if max_flux > 1:
+        col = (Flux_sources/max_flux)
+    else:
+        col = Flux_sources
+    colour = []
+    for i in col:
+        colour.append((i,i,i))
+    plt.scatter(l*(180/np.pi),m*(180/np.pi),c=colour)
+    counter = 1
+    for xy in zip(l[1:]*(180/np.pi)+0.25, m[1:]*(180/np.pi)+0.25):
+        #ax.annotate(Flux_sources_labels[counter], xy=xy, textcoords='offset points',horizontalalignment='right',
+        #            verticalalignment='bottom')
+        counter = counter + 1
+
+    ax.set_facecolor('xkcd:black')
+    plt.title("Sky Model")
+    plt.savefig("Plots/SkyModel.png", transparent=False)
+    plt.close()
+
+
+def image_visibilities(grid):
+    image = np.abs(np.fft.ifft2(np.fft.fftshift(grid)))
+    print(image)
+    img = plt.figure(figsize=(10,10))
+    plt.title("Reconstructed Sky Model")
+    plt.imshow(image)
+    plt.set_cmap('gray')
+    plt.savefig('Plots/ReconstructedSkyModel.png')
     plt.close()

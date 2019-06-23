@@ -29,6 +29,7 @@
                $('#c_uv').attr('src', 'static/UVCoverage.png?' + unique);
                $('#c_sv').attr('src', 'static/SampledVisibilities.png?' + unique);
                $('#c_visibilities').attr('src', 'static/Visibilities.png?' + unique);
+               $('#c_skymodel').attr('src', 'static/SkyModel.png?' + unique);
                alert("SUCCESS: Graphs Generated");
             });
           } else {
@@ -89,6 +90,11 @@
         background-color: #e5e5e5;
       }
 
+      .gr {
+        background-color: #e5e5e5;
+        margin-bottom: 10;
+      }
+
       button {
         margin:5;
       }
@@ -128,10 +134,10 @@
        <div id="collapse1" class="panel-collapse collapse">
          <button type="submit" id="generate_graphs" class="btn btn-default btn-primary">Generate new graphs</button>
          <br>
-         <div class="col-sm-6">
+         <div class="col-sm-6 gr">
            <img src="static/TARTAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
          </div>
-         <div class="col-sm-6">
+         <div class="col-sm-6 gr">
            <img src="static/Antenna_Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
          </div> <br>
        </div>
@@ -165,6 +171,9 @@
          <div class="col-sm-6">
            <img src="static/Visibilities.png" alt="image alt text" id=c_visibilities width="512" height="384">
          </div> <br>
+         <div class="col-sm-6">
+           <img src="static/SkyModel.png" alt="image alt text" id=c_skymodel width="512" height="384">
+         </div>
        </div>
      </div>
     </div>
