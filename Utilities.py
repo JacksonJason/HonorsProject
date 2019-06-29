@@ -168,6 +168,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     dec = dec_0
     #################################################################################################
     plot_sky_model(l, m, Flux_sources)
+    # plot_sky_model(RA_sources, DEC_sources, Flux_sources)
 
     B = get_B(b_ENU, L)
     lam = get_lambda(f)
@@ -213,8 +214,55 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     plt.close()
 
     plot_sampled_visibilities(point_sources, u_d, v_d)
+    uv = []
+    for i in range(len(u_d)):
+        uv.append([u_d[i], v_d[i]])
+    uv = np.array(uv)
+    im_size_tweak = 2.0
+    CENTRE_CHANNEL = 299792458 / 1e9
+    max_uv = np.max(np.abs(uv / CENTRE_CHANNEL))
+    cell_size_l = cell_size_m = np.rad2deg((1 / (2 * max_uv)) / 1.0)
+    Nx = int(np.round(im_size_tweak / cell_size_l))
+    Ny = int(np.round(im_size_tweak / cell_size_m))
+    Nx = find_closest_power_of_two(Nx * 5)
+    Ny = find_closest_power_of_two(Ny * 5)
 
-    image_visibilities(zz)
+    scaled_uv = np.copy(uv)
+    scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nx)
+    scaled_uv[:,1] *= np.deg2rad(cell_size_m * Ny)
+
+    gridded = grid(Nx, Ny, scaled_uv, zz)
+    image_visibilities(gridded)
+
+def find_closest_power_of_two(number):
+    s = 2
+    for i in range(0, 15):
+        if number < s:
+            return s
+        else:
+            s *= 2
+
+def box():
+    taps = np.arange(505)/float(63) - 9 / 2 # correct later, this was taken from the AA class in imaging
+    return np.where((taps >= -0.5) & (taps <= 0.5),
+            np.ones([len(taps)]),np.zeros([len(taps)]))
+
+def grid(Ny, Nx, uvw, vis):
+    g = np.zeros((Nx, Ny))
+    boxcar = box()
+    # print(uvw[0])
+    # print("ssssssssssssssssssssssssssssssssssssssssssssssssssssssss")
+    # print(uvw[1])
+    # print(boxcar)
+    for u in range(len(g)):
+        for v in range(len(g[u])):
+            # f1 = vis[u][v] * uvw[u][v]
+            # f2 = np.convolve(f1, boxcar)
+            # f3 = f2 * shah[u,v]
+            # g[u][v] = f3
+            g[u][v] = 0
+    return g
+
 
 def plot_sampled_visibilities(point_sources, u_d, v_d):
     u_track = u_d
