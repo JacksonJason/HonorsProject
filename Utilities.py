@@ -213,25 +213,29 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     plt.savefig('Plots/Visibilities.png', transparent=True)
     plt.close()
 
-    plot_sampled_visibilities(point_sources, u_d, v_d)
+    uv_tracks = plot_sampled_visibilities(point_sources, u_d, v_d)
     uv = []
     for i in range(len(u_d)):
         uv.append([u_d[i], v_d[i]])
     uv = np.array(uv)
-    im_size_tweak = 2.0
-    CENTRE_CHANNEL = 299792458 / 1e9
-    max_uv = np.max(np.abs(uv / CENTRE_CHANNEL))
-    cell_size_l = cell_size_m = np.rad2deg((1 / (2 * max_uv)) / 1.0)
-    Nx = int(np.round(im_size_tweak / cell_size_l))
-    Ny = int(np.round(im_size_tweak / cell_size_m))
-    Nx = find_closest_power_of_two(Nx * 5)
-    Ny = find_closest_power_of_two(Ny * 5)
+    cell_size_l = 0.1 #should be manually input
+    cell_size_m = 0.1
+    degrees_l = 4 #should determine through sky model
+    degrees_m = 4
+    Nl = int(np.round(degrees_l / cell_size_l))
+    Nm = int(np.round(degrees_m / cell_size_m))
+    Nl = find_closest_power_of_two(Nl * 5)
+    Nm = find_closest_power_of_two(Nm * 5)
+    rad_d_l = cell_size_l * (np.pi/180)
+    rad_d_m = cell_size_m * (np.pi/180)
+    cell_size_u = 1 / (2 * Nl * cell_size_l)
+    cell_size_v = 1 / (2 * Nm * cell_size_m)
 
     scaled_uv = np.copy(uv)
-    scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nx)
-    scaled_uv[:,1] *= np.deg2rad(cell_size_m * Ny)
+    scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nl)
+    scaled_uv[:,1] *= np.deg2rad(cell_size_m * Nm)
 
-    gridded = grid(Nx, Ny, scaled_uv, zz)
+    gridded = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, scaled_uv)
     image_visibilities(gridded)
 
 def find_closest_power_of_two(number):
@@ -242,27 +246,39 @@ def find_closest_power_of_two(number):
         else:
             s *= 2
 
-def box():
-    taps = np.arange(505)/float(63) - 9 / 2 # correct later, this was taken from the AA class in imaging
-    return np.where((taps >= -0.5) & (taps <= 0.5),
-            np.ones([len(taps)]),np.zeros([len(taps)]))
+def find_closest_coordinates_in_positions(co, positions):
+    close_i = 0
+    close_j = 0
+    min_dist = 999
+    for i in range(len(positions)):
+        for j in range(len(positions[i])):
+            dist = np.sqrt((co[0] - positions[i][j][0])**2 + (co[1] - positions[i][j][1])**2)
+            if dist < min_dist:
+                min_dist = dist
+                close_i = i
+                close_j = j
+    return close_i, close_j
 
-def grid(Ny, Nx, uvw, vis):
-    g = np.zeros((Nx, Ny))
-    boxcar = box()
-    # print(uvw[0])
-    # print("ssssssssssssssssssssssssssssssssssssssssssssssssssssssss")
-    # print(uvw[1])
-    # print(boxcar)
-    for u in range(len(g)):
-        for v in range(len(g[u])):
-            # f1 = vis[u][v] * uvw[u][v]
-            # f2 = np.convolve(f1, boxcar)
-            # f3 = f2 * shah[u,v]
-            # g[u][v] = f3
-            g[u][v] = 0
-    return g
-
+def grid(Nl, Nm, uv_tracks, d_u, d_v, uv):
+    print(len(uv), len(uv_tracks)) # these correspond to each other
+    vis = np.zeros((Nl, Nm), dtype=complex)
+    # print(uv)
+    counter = np.zeros((Nl, Nm))
+    positions = np.empty((Nl, Nm), dtype=object)
+    half_l = int(Nl / 2)
+    half_m = int(Nm / 2)
+    o_d_u = d_u
+    o_d_v = d_v
+    for i in range(len(positions)):
+        for j in range(len(positions[i])):
+            positions[i][j] = (i - half_l, j - half_m)
+    # print(positions)
+    for i in range(len(uv)):
+        x, y = find_closest_coordinates_in_positions(uv[i], positions)
+        vis[x][y] += uv_tracks[i]
+        counter[x][y] += 1
+    vis = vis/counter
+    return vis
 
 def plot_sampled_visibilities(point_sources, u_d, v_d):
     u_track = u_d
@@ -288,6 +304,7 @@ def plot_sampled_visibilities(point_sources, u_d, v_d):
     plt.title("Imag: sampled visibilities")
     plt.savefig('Plots/SampledVisibilities.png', transparent=True)
     plt.close()
+    return z
 
 def plot_sky_model(l, m, Flux_sources):
     # Plot sky model in L and M
@@ -315,8 +332,9 @@ def plot_sky_model(l, m, Flux_sources):
 def image_visibilities(grid):
     # n = grid.shape[0] * grid.shape[1]
     # grid = (1/n) * np.fft.fft2(grid)
-    image = np.fft.ifft2(grid)
-    image = np.abs(image)
+    # image = np.fft.ifft2(grid)
+    image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
+    # image = np.abs(image)
 
     # max = -999
     # maxi = -1
@@ -334,7 +352,7 @@ def image_visibilities(grid):
     # image = np.flip(np.flip(image,axis=1),axis=0)
     img = plt.figure(figsize=(10,10))
     plt.title("Reconstructed Sky Model")
-    plt.imshow(image)
+    plt.imshow(np.real(image))
     # plt.plot(image.real, image.imag)
     plt.set_cmap('gray')
     plt.savefig('Plots/ReconstructedSkyModel.png', transparent=True)
