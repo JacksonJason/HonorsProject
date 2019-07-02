@@ -260,7 +260,7 @@ def find_closest_coordinates_in_positions(co, positions):
     return close_i, close_j
 
 def grid(Nl, Nm, uv_tracks, d_u, d_v, uv):
-    print(len(uv), len(uv_tracks)) # these correspond to each other
+    # print(len(uv), len(uv_tracks)) # these correspond to each other
     vis = np.zeros((Nl, Nm), dtype=complex)
     # print(uv)
     counter = np.zeros((Nl, Nm))
@@ -274,10 +274,17 @@ def grid(Nl, Nm, uv_tracks, d_u, d_v, uv):
             positions[i][j] = (i - half_l, j - half_m)
     # print(positions)
     for i in range(len(uv)):
-        x, y = find_closest_coordinates_in_positions(uv[i], positions)
+        x, y = int(np.round(uv[i][0])), int(np.round(uv[i][1]))
+        # x, y = find_closest_coordinates_in_positions(uv[i], positions)
         vis[x][y] += uv_tracks[i]
         counter[x][y] += 1
-    vis = vis/counter
+    # vis = vis/counter
+    for i in range(len(vis)):
+        for j in range(len(vis[i])):
+            if not counter[i][j] == 0:
+                vis[i][j] = vis[i][j] / counter[i][j]
+                # print(vis[i][j])
+    # print(vis)
     return vis
 
 def plot_sampled_visibilities(point_sources, u_d, v_d):
@@ -334,7 +341,8 @@ def image_visibilities(grid):
     # grid = (1/n) * np.fft.fft2(grid)
     # image = np.fft.ifft2(grid)
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
-    # image = np.abs(image)
+    # image = np.fft.ifft2(grid)
+    image = np.abs(image)
 
     # max = -999
     # maxi = -1
@@ -352,8 +360,8 @@ def image_visibilities(grid):
     # image = np.flip(np.flip(image,axis=1),axis=0)
     img = plt.figure(figsize=(10,10))
     plt.title("Reconstructed Sky Model")
+    plt.set_cmap('gray')
     plt.imshow(np.real(image))
     # plt.plot(image.real, image.imag)
-    plt.set_cmap('gray')
     plt.savefig('Plots/ReconstructedSkyModel.png', transparent=True)
     plt.close()
