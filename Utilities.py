@@ -114,9 +114,9 @@ def plot_baseline(b_ENU, L, f, h0, h1, dec):
     v = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
     w = lam**(-1)*(np.cos(dec)*np.cos(h)*X-np.cos(dec)*np.sin(h)*Y+np.sin(dec)*Z)
     # plotBL.UV(u,v,w)
-    a=np.sqrt(X**2+Y**2)/lam # major axis
-    b=a*np.sin(dec)              # minor axis
-    v0=(Z/lam)*np.cos(dec)  # center of ellipse
+    a = np.sqrt(X**2+Y**2)/lam # major axis
+    b = a*np.sin(dec)              # minor axis
+    v0 = (Z/lam)*np.cos(dec)  # center of ellipse
     UVellipse(u,v,w,a,b,v0)
 
 def plot_array(antennas, name):
@@ -167,8 +167,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     point_sources[:,2] = m[0:]
     dec = dec_0
     #################################################################################################
-    plot_sky_model(l, m, Flux_sources)
-    # plot_sky_model(RA_sources, DEC_sources, Flux_sources)
+
 
     B = get_B(b_ENU, L)
     lam = get_lambda(f)
@@ -236,7 +235,11 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     scaled_uv[:,1] *= np.deg2rad(cell_size_m * Nm)
 
     gridded = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, scaled_uv)
-    image_visibilities(gridded)
+
+    plot_sky_model(l, m, Flux_sources, Nl, Nm)
+    # plot_sky_model(RA_sources, DEC_sources, Flux_sources)
+
+    image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m)
 
 def find_closest_power_of_two(number):
     s = 2
@@ -246,23 +249,8 @@ def find_closest_power_of_two(number):
         else:
             s *= 2
 
-def find_closest_coordinates_in_positions(co, positions):
-    close_i = 0
-    close_j = 0
-    min_dist = 999
-    for i in range(len(positions)):
-        for j in range(len(positions[i])):
-            dist = np.sqrt((co[0] - positions[i][j][0])**2 + (co[1] - positions[i][j][1])**2)
-            if dist < min_dist:
-                min_dist = dist
-                close_i = i
-                close_j = j
-    return close_i, close_j
-
 def grid(Nl, Nm, uv_tracks, d_u, d_v, uv):
-    # print(len(uv), len(uv_tracks)) # these correspond to each other
     vis = np.zeros((Nl, Nm), dtype=complex)
-    # print(uv)
     counter = np.zeros((Nl, Nm))
     positions = np.empty((Nl, Nm), dtype=object)
     half_l = int(Nl / 2)
@@ -272,19 +260,14 @@ def grid(Nl, Nm, uv_tracks, d_u, d_v, uv):
     for i in range(len(positions)):
         for j in range(len(positions[i])):
             positions[i][j] = (i - half_l, j - half_m)
-    # print(positions)
     for i in range(len(uv)):
-        x, y = int(np.round(uv[i][0])), int(np.round(uv[i][1]))
-        # x, y = find_closest_coordinates_in_positions(uv[i], positions)
+        y,x = int(np.round(uv[i][0])), int(np.round(uv[i][1])) # why is it flipped, a question to ask dr Grobler perhaps
         vis[x][y] += uv_tracks[i]
         counter[x][y] += 1
-    # vis = vis/counter
     for i in range(len(vis)):
         for j in range(len(vis[i])):
             if not counter[i][j] == 0:
                 vis[i][j] = vis[i][j] / counter[i][j]
-                # print(vis[i][j])
-    # print(vis)
     return vis
 
 def plot_sampled_visibilities(point_sources, u_d, v_d):
@@ -313,12 +296,10 @@ def plot_sampled_visibilities(point_sources, u_d, v_d):
     plt.close()
     return z
 
-def plot_sky_model(l, m, Flux_sources):
+def plot_sky_model(l, m, Flux_sources, Nl, Nm):
     # Plot sky model in L and M
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
-    # plt.xlim([-4,4])
-    # plt.ylim([-4,4])
     plt.xlabel("$l$ [degrees]")
     plt.ylabel("$m$ [degrees]")
     max_flux = max(Flux_sources)
@@ -329,6 +310,13 @@ def plot_sky_model(l, m, Flux_sources):
     colour = []
     for i in col:
         colour.append((i,i,i))
+    # l_d = (l*(180/np.pi)) * Nl/3
+    # m_d = (m*(180/np.pi)) * Nm/3
+    # im = np.zeros((Nl,Nm))
+    # for i in range(len(l_d)):
+    #     im[int(np.round(l_d[i]))][int(np.round(m_d[i]))] = Flux_sources[i]
+    #     print(im[int(np.round(l_d[i]))][int(np.round(m_d[i]))])
+    # plt.imshow(im, cmap="gray",)
     plt.scatter(l*(180/np.pi),m*(180/np.pi),c=colour)
     ax.set_facecolor('xkcd:black')
     fig.patch.set_alpha(0)
@@ -336,32 +324,18 @@ def plot_sky_model(l, m, Flux_sources):
     plt.savefig("Plots/SkyModel.png", transparent=False)
     plt.close()
 
-def image_visibilities(grid):
-    # n = grid.shape[0] * grid.shape[1]
-    # grid = (1/n) * np.fft.fft2(grid)
-    # image = np.fft.ifft2(grid)
+def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m):
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
-    # image = np.fft.ifft2(grid)
     image = np.abs(image)
-
-    # max = -999
-    # maxi = -1
-    # counter = [-1,-1]
-    # for i in image:
-    #     counter[0] = counter[0] + 1
-    #     for j in i:
-    #         counter[1] = counter[1] + 1
-    #         if j > max:
-    #             max = j
-    #             maxi = counter
-    # print(max, maxi)
-
-    # image = np.abs(np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid))))
-    # image = np.flip(np.flip(image,axis=1),axis=0)
     img = plt.figure(figsize=(10,10))
     plt.title("Reconstructed Sky Model")
     plt.set_cmap('gray')
-    plt.imshow(np.real(image))
-    # plt.plot(image.real, image.imag)
+    # DECLINATION = [-74, -39, -37.481]
+    # DECLINATION = DECLINATION[0] + DECLINATION[1]/60. + DECLINATION[2]/3600.
+    # RA = [-4, -44, -6.686]
+    # RA = RA[0] + RA[1]/60. + RA[2]/3600.
+    # plt.imshow(np.real(image), extent=[RA - Nl * 2 / 2 * cell_size_l, RA + Nl * 2 / 2 * cell_size_l,
+    #                                                DECLINATION - Nm * 2 / 2 * cell_size_m, DECLINATION + Nm * 2 / 2 * cell_size_m])
+    plt.imshow(np.real(image), origin='lower')
     plt.savefig('Plots/ReconstructedSkyModel.png', transparent=True)
     plt.close()
