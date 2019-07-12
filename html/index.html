@@ -22,7 +22,10 @@
       $(document).ready(function() {
         $("#generate_custom_graphs").click(function(e) {
           if ($("#input_file").val() != "") {
-            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val()})
+            base = $("#baseline").val()
+            console.log(base)
+            co = $("#cods").val()
+            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val(), baseline:base, cos:co})
              .done(function(string) {
                var unique = $.now();
                $('#c_antenna').attr('src', 'static/CustomAntennaLayout.png?' + unique);
@@ -105,7 +108,7 @@
         overflow: hidden;
         margin: 5;
       }
-      input {
+      .but {
         position: absolute;
         font-size: 50px;
         opacity: 0;
@@ -152,12 +155,18 @@
        </div>
        <div id="collapse2" class="panel-collapse collapse">
          <label class="btn btn-default btn-primary" id="input_label">
-           AntennaLayout <input type="file" name="input_file" id="input_file">
+           AntennaLayout <input type="file" name="input_file" id="input_file" class="but">
          </label>
          <!-- <input type="file" name="input_file" id="input_file"> -->
          <label class="btn btn-default btn-primary" id="lsm_label">
-           LSM File <input type="file" name="lsm_file" id="lsm_file">
-         </label><br>
+           LSM File <input type="file" name="lsm_file" id="lsm_file" class="but">
+         </label>
+         <select id="cods">
+            <option value="1">l/m</option>
+            <option value="2">RA/DEC</option>\
+          </select>
+         Baseline: <input type="text" name="baseline" id="baseline">
+         <br>
          <!-- <input type="file" name="lsm_file" id="lsm_file"> -->
          <button type="submit" id="generate_custom_graphs" class="btn btn-default btn-primary">Generate custom layout graphs</button><br>
          <div class="col-sm-6">

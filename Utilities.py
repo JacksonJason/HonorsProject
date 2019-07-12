@@ -129,22 +129,22 @@ def plot_array(antennas, name):
     plt.savefig('Plots/' + name + 'AntennaLayout.png', transparent=True)
     plt.close()
 
-def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
+def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
     h = np.linspace(h0,h1,num=600)*np.pi/12
     model = Tigger.load(model_name)
 ############################################################
     RA_sources = []
     DEC_sources = []
-    Flux_sources_labels = []
+    # Flux_sources_labels = []
     Flux_sources = []
     for val in model.sources:
         RA_sources.append(val.pos.ra)
         DEC_sources.append(val.pos.dec)
-        Flux_sources_labels.append(str(val.flux.I))
+        # Flux_sources_labels.append(str(val.flux.I))
         Flux_sources.append(val.flux.I)
     RA_sources = np.array(RA_sources)
     DEC_sources = np.array(DEC_sources)
-    Flux_sources_labels = np.array(Flux_sources_labels)
+    # Flux_sources_labels = np.array(Flux_sources_labels)
     Flux_sources = np.array(Flux_sources)
 
     ra_0 = model.ra0
@@ -153,8 +153,8 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     dec_0_rad = dec_0 * (np.pi/180)
 
     step_size = 200
-    RA_rad = np.array(RA_sources)*(np.pi/12)
-    DEC_rad = np.array(DEC_sources)*(np.pi/180)
+    RA_rad = RA_sources*(np.pi/12)
+    DEC_rad = DEC_sources*(np.pi/180)
     RA_delta_rad = RA_rad-ra_0_rad
 
 
@@ -227,8 +227,8 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
     Nm = find_closest_power_of_two(Nm * 5)
     rad_d_l = cell_size_l * (np.pi/180)
     rad_d_m = cell_size_m * (np.pi/180)
-    cell_size_u = 1 / (2 * Nl * cell_size_l)
-    cell_size_v = 1 / (2 * Nm * cell_size_m)
+    cell_size_u = 1 / (2 * Nl * rad_d_l)
+    cell_size_v = 1 / (2 * Nm * rad_d_m)
 
     scaled_uv = np.copy(uv)
     scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nl)
@@ -236,10 +236,21 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name):
 
     gridded = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, scaled_uv)
 
-    plot_sky_model(l, m, Flux_sources, Nl, Nm)
-    # plot_sky_model(RA_sources, DEC_sources, Flux_sources)
+    # plot_sky_model(l, m, Flux_sources, Nl, Nm)
+    if cos == "1":
+        plot_sky_model(l*(180/np.pi), m*(180/np.pi), Flux_sources, Nl, Nm, "l [degrees]", "m [degrees]")
 
-    image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m)
+        print(RA_delta_rad)
+        L = np.cos(dec_0) * np.sin(0)
+        M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
+        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M)
+    else:
+        plot_sky_model(RA_sources, DEC_sources, Flux_sources, Nl, Nm, "RA", "DEC")
+        # convert grid to RA/DEC
+        # dec = math.asin(m * np.cos(dec_0) + np.sin(dec_0) * math.sqrt(1 - l**2 - m**2))
+        # ra = ra_0 + np.atan(1 / (np.cos(dec_0) * math.sqrt(1 - l**2 - m**2) - m * np.sin(dec_0)))
+        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, dec_0, ra_0)
+
 
 def find_closest_power_of_two(number):
     s = 2
@@ -296,12 +307,12 @@ def plot_sampled_visibilities(point_sources, u_d, v_d):
     plt.close()
     return z
 
-def plot_sky_model(l, m, Flux_sources, Nl, Nm):
+def plot_sky_model(l, m, Flux_sources, Nl, Nm, x, y):
     # Plot sky model in L and M
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
-    plt.xlabel("$l$ [degrees]")
-    plt.ylabel("$m$ [degrees]")
+    plt.xlabel(x)
+    plt.ylabel(y)
     max_flux = max(Flux_sources)
     if max_flux > 1:
         col = (Flux_sources/max_flux)
@@ -317,25 +328,22 @@ def plot_sky_model(l, m, Flux_sources, Nl, Nm):
     #     im[int(np.round(l_d[i]))][int(np.round(m_d[i]))] = Flux_sources[i]
     #     print(im[int(np.round(l_d[i]))][int(np.round(m_d[i]))])
     # plt.imshow(im, cmap="gray",)
-    plt.scatter(l*(180/np.pi),m*(180/np.pi),c=colour)
+    plt.scatter(l,m,c=colour,s=8)
+    # plt.scatter(l,m,c=colour,s=8)
     ax.set_facecolor('xkcd:black')
     fig.patch.set_alpha(0)
     plt.title("Sky Model")
     plt.savefig("Plots/SkyModel.png", transparent=False)
     plt.close()
 
-def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m):
+def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION):
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
     image = np.abs(image)
     img = plt.figure(figsize=(10,10))
     plt.title("Reconstructed Sky Model")
     plt.set_cmap('gray')
-    # DECLINATION = [-74, -39, -37.481]
-    # DECLINATION = DECLINATION[0] + DECLINATION[1]/60. + DECLINATION[2]/3600.
-    # RA = [-4, -44, -6.686]
-    # RA = RA[0] + RA[1]/60. + RA[2]/3600.
-    # plt.imshow(np.real(image), extent=[RA - Nl * 2 / 2 * cell_size_l, RA + Nl * 2 / 2 * cell_size_l,
-    #                                                DECLINATION - Nm * 2 / 2 * cell_size_m, DECLINATION + Nm * 2 / 2 * cell_size_m])
-    plt.imshow(np.real(image), origin='lower')
+    plt.imshow(np.real(image), origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
+                                                            DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
+    # plt.imshow(np.real(image), origin='lower')
     plt.savefig('Plots/ReconstructedSkyModel.png', transparent=True)
     plt.close()
