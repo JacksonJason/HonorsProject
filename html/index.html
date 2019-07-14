@@ -21,11 +21,12 @@
       });
       $(document).ready(function() {
         $("#generate_custom_graphs").click(function(e) {
-          if ($("#input_file").val() != "") {
-            base = $("#baseline").val()
-            console.log(base)
-            co = $("#cods").val()
-            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val(), baseline:base, cos:co})
+          base = $("#baseline").val()
+          co = $("#cods").val()
+          cell_size = $("#cell_size").val()
+          cont = $("#input_file").val() != "" && $("#lsm_file").val() != "" && base != "" && cell_size != "" && co != ""
+          if (cont) {
+            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val(), baseline:base, cos:co, cell_size:cell_size})
              .done(function(string) {
                var unique = $.now();
                $('#c_antenna').attr('src', 'static/CustomAntennaLayout.png?' + unique);
@@ -37,7 +38,7 @@
                alert("SUCCESS: Graphs Generated");
             });
           } else {
-            alert("FAILURE: Please select a array layout and lsm file")
+            alert("FAILURE: Please select all files and fill in all fields")
           }
           e.preventDefault();
         });
@@ -166,6 +167,8 @@
             <option value="2">RA/DEC</option>\
           </select>
          Baseline: <input type="text" name="baseline" id="baseline">
+         Image Cell Size: <input type="text" name="cell_size" id="cell_size">
+
          <br>
          <!-- <input type="file" name="lsm_file" id="lsm_file"> -->
          <button type="submit" id="generate_custom_graphs" class="btn btn-default btn-primary">Generate custom layout graphs</button><br>

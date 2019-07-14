@@ -24,32 +24,7 @@ def draw_matrix(matrix):
     plt.title("Imag: visibilities")
     plt.savefig('Plots/Antenna_Visibilities.png', transparent=True)
     plt.close()
-
-def tabulate_matrix(matrix):
-    n = []
-    for i in range(matrix.shape[0]):
-        m = []
-        for j in range(matrix.shape[1]):
-            r = '%.6f' % matrix[i][j].real
-            im = '%.6f' % matrix[i][j].imag
-            if "-" in im:
-                m.append(r + im + "i")
-            else:
-                m.append(r + "+" + im + "i")
-        n.append(m)
-    m = np.array(n)
-
-    fig=plt.figure(figsize=(m.shape[0]*1, m.shape[1]*1))
-    ax = fig.add_subplot(111)
-    ax.xaxis.set_visible(False)
-    ax.yaxis.set_visible(False)
-    the_table = ax.table(cellText=m,
-              loc='center')
-    the_table.set_zorder(10)
-    plt.title("Visibility Matrix")
-    plt.savefig("Plots/Matrix.svg", transparent=True)
-    plt.close()
-
+    
 def get_B(b_ENU, L):
     D = math.sqrt(np.sum((b_ENU)**2))
     A = np.arctan2(b_ENU[0],b_ENU[1])
@@ -168,6 +143,10 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
     dec = dec_0
     #################################################################################################
 
+    if cos == "1":
+        plot_sky_model(l*(180/np.pi), m*(180/np.pi), Flux_sources, "l [degrees]", "m [degrees]")
+    else:
+        plot_sky_model(RA_sources, DEC_sources, Flux_sources, "RA", "DEC")
 
     B = get_B(b_ENU, L)
     lam = get_lambda(f)
@@ -217,8 +196,14 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
     for i in range(len(u_d)):
         uv.append([u_d[i], v_d[i]])
     uv = np.array(uv)
-    cell_size_l = 0.1 #should be manually input
-    cell_size_m = 0.1
+
+    return uv, uv_tracks, dec_0
+
+
+def image(uv, uv_tracks, cell_size, cos, dec_0):
+    c_s = float(cell_size)
+    cell_size_l = c_s
+    cell_size_m = c_s
     degrees_l = 4 #should determine through sky model
     degrees_m = 4
     Nl = int(np.round(degrees_l / cell_size_l))
@@ -236,16 +221,11 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
 
     gridded = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, scaled_uv)
 
-    # plot_sky_model(l, m, Flux_sources, Nl, Nm)
     if cos == "1":
-        plot_sky_model(l*(180/np.pi), m*(180/np.pi), Flux_sources, Nl, Nm, "l [degrees]", "m [degrees]")
-
-        print(RA_delta_rad)
         L = np.cos(dec_0) * np.sin(0)
         M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
         image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M)
     else:
-        plot_sky_model(RA_sources, DEC_sources, Flux_sources, Nl, Nm, "RA", "DEC")
         # convert grid to RA/DEC
         # dec = math.asin(m * np.cos(dec_0) + np.sin(dec_0) * math.sqrt(1 - l**2 - m**2))
         # ra = ra_0 + np.atan(1 / (np.cos(dec_0) * math.sqrt(1 - l**2 - m**2) - m * np.sin(dec_0)))
@@ -307,7 +287,7 @@ def plot_sampled_visibilities(point_sources, u_d, v_d):
     plt.close()
     return z
 
-def plot_sky_model(l, m, Flux_sources, Nl, Nm, x, y):
+def plot_sky_model(l, m, Flux_sources, x, y):
     # Plot sky model in L and M
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
@@ -321,15 +301,7 @@ def plot_sky_model(l, m, Flux_sources, Nl, Nm, x, y):
     colour = []
     for i in col:
         colour.append((i,i,i))
-    # l_d = (l*(180/np.pi)) * Nl/3
-    # m_d = (m*(180/np.pi)) * Nm/3
-    # im = np.zeros((Nl,Nm))
-    # for i in range(len(l_d)):
-    #     im[int(np.round(l_d[i]))][int(np.round(m_d[i]))] = Flux_sources[i]
-    #     print(im[int(np.round(l_d[i]))][int(np.round(m_d[i]))])
-    # plt.imshow(im, cmap="gray",)
     plt.scatter(l,m,c=colour,s=8)
-    # plt.scatter(l,m,c=colour,s=8)
     ax.set_facecolor('xkcd:black')
     fig.patch.set_alpha(0)
     plt.title("Sky Model")

@@ -41,9 +41,9 @@ class pipeline(object):
         return i+1,j
 
     @cherrypy.expose
-    def generate_custom_graphs(self, input_file=None, lsm_file=None, baseline=None, cos=None):
+    def generate_custom_graphs(self, input_file=None, lsm_file=None, baseline=None, cos=None, cell_size=None):
         upload_path = os.path.dirname(__file__)
-        if input_file is not "" and lsm_file is not "" and baseline is not "" and cos is not "":
+        if input_file is not "" and lsm_file is not "" and baseline is not "" and cos is not "" and cell_size is not "":
             bl = baseline.split(" ")
             bl_1 = int(bl[0]) - 1
             bl_2 = int(bl[1]) - 1
@@ -66,7 +66,8 @@ class pipeline(object):
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
             # asc = json_antenna['center_asc']
             ut.plot_baseline(b12, custom_L, custom_f, sha, eha, dec)
-            ut.plot_visibilities(b12, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, cos)
+            uv, uv_tracks, dec_0 = ut.plot_visibilities(b12, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, cos)
+            ut.image(uv, uv_tracks, cell_size, cos, dec_0)
 
     @cherrypy.expose
     def generate_graphs(self):
