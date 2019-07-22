@@ -65,7 +65,7 @@ class pipeline(object):
             dec = json_antenna['center_dec']
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
             # asc = json_antenna['center_asc']
-            ut.plot_baseline(b12, custom_L, custom_f, sha, eha, dec)
+            ut.plot_baseline(b12, custom_L, custom_f, sha, eha, dec, "CUSTOM")
             uv, uv_tracks, dec_0 = ut.plot_visibilities(b12, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, cos)
             ut.image(uv, uv_tracks, cell_size, cos, dec_0)
 
@@ -75,9 +75,19 @@ class pipeline(object):
         L,f = TR.get_latitude_and_frequency()
         visibilities = self.make_vis_matrix()
         ut.plot_array(layout, "TART")
-        # b12 = layout[1] - layout[2]
-        # ut.plot_baseline(b12, L, f, layout[0], layout[1])
-        # ut.plot_visibilities(0,0, b12, L, f)
+        b = layout[1] - layout[0] #choose baseline later
+        # ut.plot_baseline(b, L, f, , "TART")
+        # h = np.linspace(h0,h1,num=600)*np.pi/12
+        # need dec0 as well
+        # u_d, v_d =  ut.get_uv_tracks(b, L, f)
+        # uv_tracks = ut.plot_sampled_visibilities(point_sources, u_d, v_d)
+        # uv = []
+        # for i in range(len(u_d)):
+        #     uv.append([u_d[i], v_d[i]])
+        # uv = np.array(uv)
+
+        # ut.image(uv, uv_tracks, cell_size, cos, dec_0)
+
 
     @cherrypy.expose
     def index(self):

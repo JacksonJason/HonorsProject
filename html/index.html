@@ -13,6 +13,7 @@
            .done(function(string) {
              var unique = $.now();
              $('#antenna').attr('src', 'static/TARTAntennaLayout.png?' + unique);
+             $('#T_uv').attr('src', 'static/TARTUVCoverage.png?' + unique);
              $('#visibilities').attr('src', 'static/Antenna_Visibilities.png?' + unique);
              alert("SUCCESS: Graphs Generated");
           });
@@ -30,7 +31,7 @@
              .done(function(string) {
                var unique = $.now();
                $('#c_antenna').attr('src', 'static/CustomAntennaLayout.png?' + unique);
-               $('#c_uv').attr('src', 'static/UVCoverage.png?' + unique);
+               $('#c_uv').attr('src', 'static/CUSTOMUVCoverage.png?' + unique);
                $('#c_sv').attr('src', 'static/SampledVisibilities.png?' + unique);
                $('#c_visibilities').attr('src', 'static/Visibilities.png?' + unique);
                $('#c_skymodel').attr('src', 'static/SkyModel.png?' + unique);
@@ -92,12 +93,12 @@
       }
 
       .collapse {
-        background-color: #e5e5e5;
+          background-color: #e5e5e5;
       }
 
       .gr {
         background-color: #e5e5e5;
-        margin-bottom: 10;
+        /* margin-bottom: 10; */
       }
 
       button {
@@ -127,6 +128,12 @@
           <input type="file" name="input_file" id="input_file">
           <button type="submit" />Generate new graphs
       </form> -->
+      <select id="cods">
+         <option value="1">l/m</option>
+         <option value="2">RA/DEC</option>\
+       </select>
+      Baseline: <input type="text" name="baseline" id="baseline">
+      Image Cell Size: <input type="text" name="cell_size" id="cell_size">
     <br>
     <div class="panel-group" id="accordion">
      <div class="panel panel-default">
@@ -136,15 +143,19 @@
            TART</a>
          </h4>
        </div>
-       <div id="collapse1" class="panel-collapse collapse">
+       <div id="collapse1" class="collapse panel-collapse">
          <button type="submit" id="generate_graphs" class="btn btn-default btn-primary">Generate new graphs</button>
          <br>
          <div class="col-sm-6 gr">
-           <img src="static/TARTAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
+           <img src="static/TARTAntennaLayout.png" alt="antenna layout" id=antenna  width="512" height="400">
          </div>
          <div class="col-sm-6 gr">
-           <img src="static/Antenna_Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
+           <img src="static/TARTUVCoverage.png" alt="baseline image" id=T_uv width="400" height="400">
          </div> <br>
+         <div class="gr">
+           <img src="static/Antenna_Visibilities.png" alt="visibilities" id=visibilities width="512" height="384">
+         </div>
+         <br>
        </div>
      </div>
      <div class="panel panel-default">
@@ -162,12 +173,6 @@
          <label class="btn btn-default btn-primary" id="lsm_label">
            LSM File <input type="file" name="lsm_file" id="lsm_file" class="but">
          </label>
-         <select id="cods">
-            <option value="1">l/m</option>
-            <option value="2">RA/DEC</option>\
-          </select>
-         Baseline: <input type="text" name="baseline" id="baseline">
-         Image Cell Size: <input type="text" name="cell_size" id="cell_size">
 
          <br>
          <!-- <input type="file" name="lsm_file" id="lsm_file"> -->
@@ -176,7 +181,7 @@
            <img src="static/CustomAntennaLayout.png" alt="image alt text" id=c_antenna  width="512" height="384">
          </div>
          <div class="col-sm-6">
-           <img src="static/UVCoverage.png" alt="image alt text" id=c_uv width="400" height="400">
+           <img src="static/CUSTOMUVCoverage.png" alt="image alt text" id=c_uv width="400" height="400">
          </div> <br>
          <div class="col-sm-6">
            <img src="static/SampledVisibilities.png" alt="image alt text" id=c_sv  width="512" height="384">

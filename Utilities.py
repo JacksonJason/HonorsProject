@@ -12,6 +12,7 @@ import Tigger
 def draw_matrix(matrix):
     plt.figure()
     plt.subplot(121)
+    plt.set_cmap('viridis')
     plt.imshow(matrix.real)
     # plt.xlabel("Timeslots")
     # plt.ylabel("Jy")
@@ -24,7 +25,7 @@ def draw_matrix(matrix):
     plt.title("Imag: visibilities")
     plt.savefig('Plots/Antenna_Visibilities.png', transparent=True)
     plt.close()
-    
+
 def get_B(b_ENU, L):
     D = math.sqrt(np.sum((b_ENU)**2))
     A = np.arctan2(b_ENU[0],b_ENU[1])
@@ -40,7 +41,7 @@ def get_lambda(f):
     return lam
 
 # This code is taken from the fundamentals of interferometry notebook.
-def UVellipse(u,v,w,a,b,v0):
+def UVellipse(u,v,w,a,b,v0, name):
     fig=plt.figure(0, figsize=(8,8))
 
     e1=Ellipse(xy=np.array([0,v0]),width=2*a,height=2*b,angle=0)
@@ -73,10 +74,10 @@ def UVellipse(u,v,w,a,b,v0):
     ax.plot(-u,-v,"r")
     ax.grid(True)
     plt.title("UV Coverage")
-    plt.savefig('Plots/UVCoverage.png', transparent=True)
+    plt.savefig('Plots/' + name + 'UVCoverage.png', transparent=True)
     plt.close()
 
-def plot_baseline(b_ENU, L, f, h0, h1, dec):
+def plot_baseline(b_ENU, L, f, h0, h1, dec, name):
     # dec = model.dec0
     B = get_B(b_ENU, L)
 
@@ -92,7 +93,7 @@ def plot_baseline(b_ENU, L, f, h0, h1, dec):
     a = np.sqrt(X**2+Y**2)/lam # major axis
     b = a*np.sin(dec)              # minor axis
     v0 = (Z/lam)*np.cos(dec)  # center of ellipse
-    UVellipse(u,v,w,a,b,v0)
+    UVellipse(u,v,w,a,b,v0, name)
 
 def plot_array(antennas, name):
     plt.figure()
@@ -103,6 +104,17 @@ def plot_array(antennas, name):
     plt.title(name + ' Array Layout')
     plt.savefig('Plots/' + name + 'AntennaLayout.png', transparent=True)
     plt.close()
+
+def get_uv_tracks(b_ENU, L, f, h, dec):
+    B = get_B(b_ENU, L)
+    lam = get_lambda(f)
+
+    X = B[0]
+    Y = B[1]
+    Z = B[2]
+    u_d = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
+    v_d = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
+    return u_d, v_d
 
 def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
     h = np.linspace(h0,h1,num=600)*np.pi/12
@@ -127,7 +139,6 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
     ra_0_rad = ra_0 * (np.pi/12)
     dec_0_rad = dec_0 * (np.pi/180)
 
-    step_size = 200
     RA_rad = RA_sources*(np.pi/12)
     DEC_rad = DEC_sources*(np.pi/180)
     RA_delta_rad = RA_rad-ra_0_rad
@@ -148,14 +159,16 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
     else:
         plot_sky_model(RA_sources, DEC_sources, Flux_sources, "RA", "DEC")
 
-    B = get_B(b_ENU, L)
-    lam = get_lambda(f)
-
-    X = B[0]
-    Y = B[1]
-    Z = B[2]
-    u_d = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
-    v_d = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
+    # B = get_B(b_ENU, L)
+    # lam = get_lambda(f)
+    #
+    # X = B[0]
+    # Y = B[1]
+    # Z = B[2]
+    # u_d = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
+    # v_d = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
+    u_d, v_d = get_uv_tracks(b_ENU, L, f, h, dec)
+    step_size = 200
     u = np.linspace(-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10, num=step_size, endpoint=True)
     v = np.linspace(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10, num=step_size, endpoint=True)
     uu, vv = np.meshgrid(u, v)
