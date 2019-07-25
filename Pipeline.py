@@ -55,7 +55,7 @@ class pipeline(object):
                 json_antenna = json.load(outfile)
             custom_layout = np.array(json_antenna['antennas'])
             ut.plot_array(custom_layout, "Custom")
-            b12 = custom_layout[bl_2] - custom_layout[bl_1]
+            b = custom_layout[bl_2] - custom_layout[bl_1]
             custom_L = json_antenna['latitude']
             custom_L = (np.pi/180)* (custom_L[0] + custom_L[1]/60. + custom_L[2]/3600.)
             custom_f = json_antenna['frequency']
@@ -65,8 +65,9 @@ class pipeline(object):
             dec = json_antenna['center_dec']
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
             # asc = json_antenna['center_asc']
-            ut.plot_baseline(b12, custom_L, custom_f, sha, eha, dec, "CUSTOM")
-            uv, uv_tracks, dec_0 = ut.plot_visibilities(b12, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, cos)
+            ut.plot_baseline(b, custom_L, custom_f, sha, eha, dec, "CUSTOM")
+            uv, uv_tracks, dec_0 = ut.plot_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, cos, custom_layout)
+            # change image method to accept all baselines and grid them all
             ut.image(uv, uv_tracks, cell_size, cos, dec_0)
 
     @cherrypy.expose
@@ -76,10 +77,10 @@ class pipeline(object):
         visibilities = self.make_vis_matrix()
         ut.plot_array(layout, "TART")
         b = layout[1] - layout[0] #choose baseline later
+        # need dec0 as well as starting and ending hour angle
         # ut.plot_baseline(b, L, f, , "TART")
         # h = np.linspace(h0,h1,num=600)*np.pi/12
-        # need dec0 as well
-        # u_d, v_d =  ut.get_uv_tracks(b, L, f)
+        u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
         # uv_tracks = ut.plot_sampled_visibilities(point_sources, u_d, v_d)
         # uv = []
         # for i in range(len(u_d)):

@@ -116,7 +116,20 @@ def get_uv_tracks(b_ENU, L, f, h, dec):
     v_d = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
     return u_d, v_d
 
-def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
+def get_uv_and_tracks(b_ENU, L, f, h, dec, point_sources):
+    u_d, v_d = get_uv_tracks(b_ENU, L, f, h, dec)
+    step_size = 200
+    u = np.linspace(-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10, num=step_size, endpoint=True)
+    v = np.linspace(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10, num=step_size, endpoint=True)
+    uu, vv = np.meshgrid(u, v)
+    uv_tracks = plot_sampled_visibilities(point_sources, u_d, v_d)
+    uv = []
+    for i in range(len(u_d)):
+        uv.append([u_d[i], v_d[i]])
+    uv = np.array(uv)
+    return uv, u_d, v_d, uu, vv, uv_tracks
+
+def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
     h = np.linspace(h0,h1,num=600)*np.pi/12
     model = Tigger.load(model_name)
 ############################################################
@@ -167,11 +180,20 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
     # Z = B[2]
     # u_d = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
     # v_d = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
-    u_d, v_d = get_uv_tracks(b_ENU, L, f, h, dec)
-    step_size = 200
-    u = np.linspace(-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10, num=step_size, endpoint=True)
-    v = np.linspace(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10, num=step_size, endpoint=True)
-    uu, vv = np.meshgrid(u, v)
+
+    # u_d, v_d = get_uv_tracks(b_ENU, L, f, h, dec)
+    # step_size = 200
+    # u = np.linspace(-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10, num=step_size, endpoint=True)
+    # v = np.linspace(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10, num=step_size, endpoint=True)
+    # uu, vv = np.meshgrid(u, v)
+    # uv_tracks = plot_sampled_visibilities(point_sources, u_d, v_d)
+    # uv = []
+    # for i in range(len(u_d)):
+    #     uv.append([u_d[i], v_d[i]])
+    # uv = np.array(uv)
+
+    uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b_ENU, L, f, h, dec, point_sources)
+
     zz = np.zeros(uu.shape).astype(complex)
     s = point_sources.shape
     for counter in range(0, s[0]):
@@ -204,20 +226,24 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos):
     plt.savefig('Plots/Visibilities.png', transparent=True)
     plt.close()
 
-    uv_tracks = plot_sampled_visibilities(point_sources, u_d, v_d)
-    uv = []
-    for i in range(len(u_d)):
-        uv.append([u_d[i], v_d[i]])
-    uv = np.array(uv)
+    all_uv_tracks = []
+    all_uv = []
 
-    return uv, uv_tracks, dec_0
+    for i in range(len(layout)):
+        for j in range(i+1, len(layout)):
+            b = layout[j] - layout[i]
+            uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b, L, f, h, dec, point_sources)
+            all_uv.append(uv)
+            all_uv_tracks.append(uv_tracks)
+
+    return all_uv, all_uv_tracks, dec_0
 
 
 def image(uv, uv_tracks, cell_size, cos, dec_0):
     c_s = float(cell_size)
     cell_size_l = c_s
     cell_size_m = c_s
-    degrees_l = 4 #should determine through sky model
+    degrees_l = 4 # should determine through sky model
     degrees_m = 4
     Nl = int(np.round(degrees_l / cell_size_l))
     Nm = int(np.round(degrees_m / cell_size_m))
@@ -228,11 +254,7 @@ def image(uv, uv_tracks, cell_size, cos, dec_0):
     cell_size_u = 1 / (2 * Nl * rad_d_l)
     cell_size_v = 1 / (2 * Nm * rad_d_m)
 
-    scaled_uv = np.copy(uv)
-    scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nl)
-    scaled_uv[:,1] *= np.deg2rad(cell_size_m * Nm)
-
-    gridded = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, scaled_uv)
+    gridded = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
 
     if cos == "1":
         L = np.cos(dec_0) * np.sin(0)
@@ -253,21 +275,27 @@ def find_closest_power_of_two(number):
         else:
             s *= 2
 
-def grid(Nl, Nm, uv_tracks, d_u, d_v, uv):
+def grid(Nl, Nm, uv_tracks, d_u, d_v, uv, cell_size_l, cell_size_m):
     vis = np.zeros((Nl, Nm), dtype=complex)
     counter = np.zeros((Nl, Nm))
     positions = np.empty((Nl, Nm), dtype=object)
     half_l = int(Nl / 2)
     half_m = int(Nm / 2)
-    o_d_u = d_u
-    o_d_v = d_v
+    # is this doing anything
     for i in range(len(positions)):
         for j in range(len(positions[i])):
             positions[i][j] = (i - half_l, j - half_m)
+
     for i in range(len(uv)):
-        y,x = int(np.round(uv[i][0])), int(np.round(uv[i][1])) # why is it flipped, a question to ask dr Grobler perhaps
-        vis[x][y] += uv_tracks[i]
-        counter[x][y] += 1
+        scaled_uv = np.copy(uv[i])
+        scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nl)
+        scaled_uv[:,1] *= np.deg2rad(cell_size_m * Nm)
+
+        for j in range(len(scaled_uv)):
+            y,x = int(np.round(scaled_uv[j][0])), int(np.round(scaled_uv[j][1])) # why is it flipped, a question to ask dr Grobler perhaps
+            vis[x][y] += uv_tracks[i][j]
+            counter[x][y] += 1
+
     for i in range(len(vis)):
         for j in range(len(vis[i])):
             if not counter[i][j] == 0:
