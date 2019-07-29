@@ -194,6 +194,19 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
 
     uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b_ENU, L, f, h, dec, point_sources)
 
+    plt.subplot(121)
+    plt.plot(uv_tracks.real)
+    plt.xlabel("Timeslots")
+    plt.ylabel("Jy")
+    plt.title("Real: sampled visibilities")
+
+    plt.subplot(122)
+    plt.plot(uv_tracks.imag)
+    plt.xlabel("Timeslots")
+    plt.title("Imag: sampled visibilities")
+    plt.savefig('Plots/SampledVisibilities.png', transparent=True)
+    plt.close()
+
     zz = np.zeros(uu.shape).astype(complex)
     s = point_sources.shape
     for counter in range(0, s[0]):
@@ -235,6 +248,10 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
             uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b, L, f, h, dec, point_sources)
             all_uv.append(uv)
             all_uv_tracks.append(uv_tracks)
+            b = layout[i] - layout[j]
+            uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b, L, f, h, dec, point_sources)
+            all_uv.append(uv)
+            all_uv_tracks.append(uv_tracks)
 
     return all_uv, all_uv_tracks, dec_0
 
@@ -259,12 +276,17 @@ def image(uv, uv_tracks, cell_size, cos, dec_0):
     if cos == "1":
         L = np.cos(dec_0) * np.sin(0)
         M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
-        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M)
+        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M, "SkyModel")
+        # psf = np.ones((Nl, Nm), dtype=complex)
+        # image_visibilities(psf, Nl, Nm, cell_size_l, cell_size_m, L, M, "PSF")
+
     else:
         # convert grid to RA/DEC
         # dec = math.asin(m * np.cos(dec_0) + np.sin(dec_0) * math.sqrt(1 - l**2 - m**2))
         # ra = ra_0 + np.atan(1 / (np.cos(dec_0) * math.sqrt(1 - l**2 - m**2) - m * np.sin(dec_0)))
-        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, dec_0, ra_0)
+        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, dec_0, ra_0, "SkyModel")
+        # psf = np.ones((Nl, Nm), dtype=complex)
+        # image_visibilities(psf, Nl, Nm, cell_size_l, cell_size_m, L, M, "PSF")
 
 
 def find_closest_power_of_two(number):
@@ -288,11 +310,16 @@ def grid(Nl, Nm, uv_tracks, d_u, d_v, uv, cell_size_l, cell_size_m):
 
     for i in range(len(uv)):
         scaled_uv = np.copy(uv[i])
+        #multiply by half to scale maybe. then use positions array
         scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nl)
         scaled_uv[:,1] *= np.deg2rad(cell_size_m * Nm)
-
+        # print(scaled_uv)
+        # print(i, len(uv))
         for j in range(len(scaled_uv)):
             y,x = int(np.round(scaled_uv[j][0])), int(np.round(scaled_uv[j][1])) # why is it flipped, a question to ask dr Grobler perhaps
+            x += half_l
+            y += half_m
+            # print(x,y)
             vis[x][y] += uv_tracks[i][j]
             counter[x][y] += 1
 
@@ -314,18 +341,7 @@ def plot_sampled_visibilities(point_sources, u_d, v_d):
         l_i = point_sources[counter,1]
         m_i = point_sources[counter,2]
         z += A_i*np.exp(-1*2*np.pi*1j*((u_track*l_i)+(v_track*m_i)))
-    plt.subplot(121)
-    plt.plot(z.real)
-    plt.xlabel("Timeslots")
-    plt.ylabel("Jy")
-    plt.title("Real: sampled visibilities")
 
-    plt.subplot(122)
-    plt.plot(z.imag)
-    plt.xlabel("Timeslots")
-    plt.title("Imag: sampled visibilities")
-    plt.savefig('Plots/SampledVisibilities.png', transparent=True)
-    plt.close()
     return z
 
 def plot_sky_model(l, m, Flux_sources, x, y):
@@ -349,14 +365,14 @@ def plot_sky_model(l, m, Flux_sources, x, y):
     plt.savefig("Plots/SkyModel.png", transparent=False)
     plt.close()
 
-def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION):
+def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name):
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
     image = np.abs(image)
     img = plt.figure(figsize=(10,10))
-    plt.title("Reconstructed Sky Model")
-    plt.set_cmap('gray')
+    plt.title("Reconstructed" + name)
+    plt.set_cmap('nipy_spectral')
     plt.imshow(np.real(image), origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
                                                             DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
     # plt.imshow(np.real(image), origin='lower')
-    plt.savefig('Plots/ReconstructedSkyModel.png', transparent=True)
+    plt.savefig('Plots/Reconstructed' + name + '.png', transparent=True)
     plt.close()
