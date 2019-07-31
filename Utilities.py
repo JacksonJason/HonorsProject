@@ -135,16 +135,13 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
 ############################################################
     RA_sources = []
     DEC_sources = []
-    # Flux_sources_labels = []
     Flux_sources = []
     for val in model.sources:
         RA_sources.append(val.pos.ra)
         DEC_sources.append(val.pos.dec)
-        # Flux_sources_labels.append(str(val.flux.I))
         Flux_sources.append(val.flux.I)
     RA_sources = np.array(RA_sources)
     DEC_sources = np.array(DEC_sources)
-    # Flux_sources_labels = np.array(Flux_sources_labels)
     Flux_sources = np.array(Flux_sources)
 
     ra_0 = model.ra0
@@ -171,26 +168,6 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
         plot_sky_model(l*(180/np.pi), m*(180/np.pi), Flux_sources, "l [degrees]", "m [degrees]")
     else:
         plot_sky_model(RA_sources, DEC_sources, Flux_sources, "RA", "DEC")
-
-    # B = get_B(b_ENU, L)
-    # lam = get_lambda(f)
-    #
-    # X = B[0]
-    # Y = B[1]
-    # Z = B[2]
-    # u_d = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
-    # v_d = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
-
-    # u_d, v_d = get_uv_tracks(b_ENU, L, f, h, dec)
-    # step_size = 200
-    # u = np.linspace(-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10, num=step_size, endpoint=True)
-    # v = np.linspace(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10, num=step_size, endpoint=True)
-    # uu, vv = np.meshgrid(u, v)
-    # uv_tracks = plot_sampled_visibilities(point_sources, u_d, v_d)
-    # uv = []
-    # for i in range(len(u_d)):
-    #     uv.append([u_d[i], v_d[i]])
-    # uv = np.array(uv)
 
     uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b_ENU, L, f, h, dec, point_sources)
 
@@ -256,29 +233,38 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
     return all_uv, all_uv_tracks, dec_0
 
 
-def image(uv, uv_tracks, cell_size, cos, dec_0):
+def image(uv, uv_tracks, cell_size, cos, dec_0, res):
     c_s = float(cell_size)
     cell_size_l = c_s
     cell_size_m = c_s
-    degrees_l = 4 # should determine through sky model
-    degrees_m = 4
+    degrees_l = float(res)
+    degrees_m = float(res)
     Nl = int(np.round(degrees_l / cell_size_l))
     Nm = int(np.round(degrees_m / cell_size_m))
-    Nl = find_closest_power_of_two(Nl * 5)
-    Nm = find_closest_power_of_two(Nm * 5)
+    Nl = find_closest_power_of_two(Nl)
+    Nm = find_closest_power_of_two(Nm)
     rad_d_l = cell_size_l * (np.pi/180)
     rad_d_m = cell_size_m * (np.pi/180)
     cell_size_u = 1 / (2 * Nl * rad_d_l)
     cell_size_v = 1 / (2 * Nm * rad_d_m)
 
     gridded = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
+    img = plt.figure(figsize=(10,10))
+    plt.title("Grid")
+    plt.set_cmap('nipy_spectral')
+    im = plt.imshow(np.real(gridded), origin='lower')
+    plt.xlabel("l")
+    plt.ylabel("m")
+    plt.savefig('Plots/grid.png', transparent=True)
 
     if cos == "1":
         L = np.cos(dec_0) * np.sin(0)
         M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
-        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M, "SkyModel")
-        # psf = np.ones((Nl, Nm), dtype=complex)
-        # image_visibilities(psf, Nl, Nm, cell_size_l, cell_size_m, L, M, "PSF")
+        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M, "SkyModel", "l", "m")
+
+        psf = np.ones ((np.array(uv_tracks).shape), dtype=complex)
+        psf_grid = grid(Nl, Nm, psf, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
+        image_visibilities(psf_grid, Nl, Nm, cell_size_l, cell_size_m, L, M, "PSF", "l", "m")
 
     else:
         # convert grid to RA/DEC
@@ -300,28 +286,23 @@ def find_closest_power_of_two(number):
 def grid(Nl, Nm, uv_tracks, d_u, d_v, uv, cell_size_l, cell_size_m):
     vis = np.zeros((Nl, Nm), dtype=complex)
     counter = np.zeros((Nl, Nm))
-    positions = np.empty((Nl, Nm), dtype=object)
     half_l = int(Nl / 2)
     half_m = int(Nm / 2)
-    # is this doing anything
-    for i in range(len(positions)):
-        for j in range(len(positions[i])):
-            positions[i][j] = (i - half_l, j - half_m)
 
     for i in range(len(uv)):
         scaled_uv = np.copy(uv[i])
-        #multiply by half to scale maybe. then use positions array
         scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nl)
         scaled_uv[:,1] *= np.deg2rad(cell_size_m * Nm)
-        # print(scaled_uv)
-        # print(i, len(uv))
         for j in range(len(scaled_uv)):
-            y,x = int(np.round(scaled_uv[j][0])), int(np.round(scaled_uv[j][1])) # why is it flipped, a question to ask dr Grobler perhaps
+            y,x = int(np.round(scaled_uv[j][0])), int(np.round(scaled_uv[j][1]))
             x += half_l
             y += half_m
-            # print(x,y)
-            vis[x][y] += uv_tracks[i][j]
-            counter[x][y] += 1
+            if not x >= vis.shape[0] and not y >= vis.shape[1]:
+                vis[x][y] += uv_tracks[i][j]
+                counter[x][y] += 1
+            else:
+                # Return a error message if the gridding isnt perfect
+                print("BIG ERROR MESSAGE")
 
     for i in range(len(vis)):
         for j in range(len(vis[i])):
@@ -365,14 +346,16 @@ def plot_sky_model(l, m, Flux_sources, x, y):
     plt.savefig("Plots/SkyModel.png", transparent=False)
     plt.close()
 
-def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name):
+def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x_title, y_title):
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
     image = np.abs(image)
     img = plt.figure(figsize=(10,10))
     plt.title("Reconstructed" + name)
     plt.set_cmap('nipy_spectral')
-    plt.imshow(np.real(image), origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
-                                                            DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
-    # plt.imshow(np.real(image), origin='lower')
+    im_vis = plt.imshow(np.real(image), origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
+                                                        DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
+    img.colorbar(im_vis)
+    plt.xlabel(x_title)
+    plt.ylabel(y_title)
     plt.savefig('Plots/Reconstructed' + name + '.png', transparent=True)
     plt.close()

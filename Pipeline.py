@@ -41,9 +41,9 @@ class pipeline(object):
         return i+1,j
 
     @cherrypy.expose
-    def generate_custom_graphs(self, input_file=None, lsm_file=None, baseline=None, cos=None, cell_size=None):
+    def generate_custom_graphs(self, input_file=None, lsm_file=None, baseline=None, cos=None, cell_size=None, res=None):
         upload_path = os.path.dirname(__file__)
-        if input_file is not "" and lsm_file is not "" and baseline is not "" and cos is not "" and cell_size is not "":
+        if res is not "" and input_file is not "" and lsm_file is not "" and baseline is not "" and cos is not "" and cell_size is not "":
             bl = baseline.split(" ")
             bl_1 = int(bl[0]) - 1
             bl_2 = int(bl[1]) - 1
@@ -68,7 +68,7 @@ class pipeline(object):
             ut.plot_baseline(b, custom_L, custom_f, sha, eha, dec, "CUSTOM")
             uv, uv_tracks, dec_0 = ut.plot_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, cos, custom_layout)
             # change image method to accept all baselines and grid them all
-            ut.image(uv, uv_tracks, cell_size, cos, dec_0)
+            ut.image(uv, uv_tracks, cell_size, cos, dec_0, res)
 
     @cherrypy.expose
     def generate_graphs(self):
