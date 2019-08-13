@@ -9,14 +9,24 @@
     <script type="text/javascript">
       $(document).ready(function() {
         $("#generate_graphs").click(function(e) {
-          $.post("/generate_graphs")
-           .done(function(string) {
-             var unique = $.now();
-             $('#antenna').attr('src', 'static/TARTAntennaLayout.png?' + unique);
-             $('#T_uv').attr('src', 'static/TARTUVCoverage.png?' + unique);
-             $('#visibilities').attr('src', 'static/Antenna_Visibilities.png?' + unique);
-             alert("SUCCESS: Graphs Generated");
-          });
+          co = $("#cods").val()
+          cell_size = $("#cell_size").val()
+          resolusion = $("#resolusion").val()
+          cont = resolusion != "" && cell_size != "" && co != ""
+          if (cont) {
+            $.post("/generate_graphs",{cos:co, cell_size:cell_size, res:resolusion})
+             .done(function(string) {
+               var unique = $.now();
+               $('#antenna').attr('src', 'static/TARTAntennaLayout.png?' + unique);
+               $('#T_uv').attr('src', 'static/TARTUVCoverage.png?' + unique);
+               $('#visibilities').attr('src', 'static/Antenna_Visibilities.png?' + unique);
+               $('#c_TART_reconstruction').attr('src', 'static/ReconstructedTARTSkyModel.png?' + unique);
+               $('#c_TART_reconstruction_psf').attr('src', 'static/ReconstructedTARTPSF.png?' + unique);
+               alert("SUCCESS: Graphs Generated");
+            });
+          } else {
+            alert("FAILURE: Please select all files and fill in all fields")
+          }
           e.preventDefault();
         });
       });
@@ -36,9 +46,9 @@
                $('#c_sv').attr('src', 'static/SampledVisibilities.png?' + unique);
                $('#c_visibilities').attr('src', 'static/Visibilities.png?' + unique);
                $('#c_skymodel').attr('src', 'static/SkyModel.png?' + unique);
-               $('#c_reconstruction').attr('src', 'static/ReconstructedSkyModel.png?' + unique);
-               $('#c_reconstruction_psf').attr('src', 'static/ReconstructedPSF.png?' + unique);
-               $('#c_grid').attr('src', 'static/grid.png?' + unique);
+               $('#c_reconstruction').attr('src', 'static/ReconstructedCUSTOMSkyModel.png?' + unique);
+               $('#c_reconstruction_psf').attr('src', 'static/ReconstructedCUSTOMPSF.png?' + unique);
+               $('#c_grid').attr('src', 'static/CUSTOMgrid.png?' + unique);
                alert("SUCCESS: Graphs Generated");
             });
           } else {
@@ -160,6 +170,13 @@
            <img src="static/Antenna_Visibilities.png" alt="visibilities" id=visibilities width="512" height="384">
          </div>
          <br>
+         <div class="col-sm-6">
+           <img src="static/ReconstructedTARTSkyModel.png" alt="image alt text" id=c_TART_reconstruction width="512" height="384">
+         </div>
+         <div>
+           <img src="static/ReconstructedTARTPSF.png" alt="image alt text" id=c_TART_reconstruction_psf width="512" height="384">
+         </div>
+         <br>
        </div>
      </div>
      <div class="panel panel-default">
@@ -197,13 +214,13 @@
            <img src="static/SkyModel.png" alt="image alt text" id=c_skymodel width="512" height="384">
          </div>
          <div class="col-sm-6">
-           <img src="static/ReconstructedSkyModel.png" alt="image alt text" id=c_reconstruction width="512" height="384">
+           <img src="static/ReconstructedCUSTOMSkyModel.png" alt="image alt text" id=c_reconstruction width="512" height="384">
          </div> <br>
          <div class="col-sm-6">
-           <img src="static/ReconstructedPSF.png" alt="image alt text" id=c_reconstruction_psf width="512" height="384">
+           <img src="static/ReconstructedCUSTOMPSF.png" alt="image alt text" id=c_reconstruction_psf width="512" height="384">
          </div>
          <div class="col-sm-6">
-           <img src="static/grid.png" alt="image alt text" id=c_grid width="512" height="384">
+           <img src="static/CUSTOMgrid.png" alt="image alt text" id=c_grid width="512" height="384">
          </div> <br>
        </div>
      </div>

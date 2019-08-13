@@ -14,14 +14,13 @@ def draw_matrix(matrix):
     plt.subplot(121)
     plt.set_cmap('viridis')
     plt.imshow(matrix.real)
-    # plt.xlabel("Timeslots")
-    # plt.ylabel("Jy")
+    plt.xlabel("u")
+    plt.ylabel("v")
     plt.title("Real: visibilities")
 
     plt.subplot(122)
     plt.imshow(matrix.imag)
-    # plt.xlabel("Timeslots")
-    # plt.ylabel("Jy")
+    plt.xlabel("u")
     plt.title("Imag: visibilities")
     plt.savefig('Plots/Antenna_Visibilities.png', transparent=True)
     plt.close()
@@ -73,7 +72,9 @@ def UVellipse(u,v,w,a,b,v0, name):
     ax.plot(u,v,"b")
     ax.plot(-u,-v,"r")
     ax.grid(True)
-    plt.title("UV Coverage")
+    plt.title("UV Coverage", size=20)
+    plt.xlabel("u", size=18)
+    plt.ylabel("v", size=18)
     plt.savefig('Plots/' + name + 'UVCoverage.png', transparent=True)
     plt.close()
 
@@ -233,7 +234,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
     return all_uv, all_uv_tracks, dec_0
 
 
-def image(uv, uv_tracks, cell_size, cos, dec_0, res):
+def image(uv, uv_tracks, cell_size, cos, dec_0, res, name):
     c_s = float(cell_size)
     cell_size_l = c_s
     cell_size_m = c_s
@@ -248,23 +249,24 @@ def image(uv, uv_tracks, cell_size, cos, dec_0, res):
     cell_size_u = 1 / (2 * Nl * rad_d_l)
     cell_size_v = 1 / (2 * Nm * rad_d_m)
 
-    gridded = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
+    gridded, cell_size_error = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
     img = plt.figure(figsize=(10,10))
-    plt.title("Grid")
+    plt.title("Baseline Grid", size=20)
     plt.set_cmap('nipy_spectral')
-    im = plt.imshow(np.real(gridded), origin='lower')
-    plt.xlabel("l")
-    plt.ylabel("m")
-    plt.savefig('Plots/grid.png', transparent=True)
-
+    im = plt.imshow(np.real(np.abs(gridded)), origin='lower')
+    plt.axis('off')
+    # plt.xlabel("l", size=18)
+    # plt.ylabel("m", size=18)
+    plt.savefig('Plots/' + name + 'grid.png', transparent=True)
+    print(cos)
     if cos == "1":
         L = np.cos(dec_0) * np.sin(0)
         M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
-        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M, "SkyModel", "l", "m")
+        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"SkyModel", "l", "m", cell_size_error)
 
         psf = np.ones ((np.array(uv_tracks).shape), dtype=complex)
-        psf_grid = grid(Nl, Nm, psf, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
-        image_visibilities(psf_grid, Nl, Nm, cell_size_l, cell_size_m, L, M, "PSF", "l", "m")
+        psf_grid, cell_size_error = grid(Nl, Nm, psf, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
+        image_visibilities(psf_grid, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"PSF", "l", "m", cell_size_error)
 
     else:
         # convert grid to RA/DEC
@@ -288,7 +290,7 @@ def grid(Nl, Nm, uv_tracks, d_u, d_v, uv, cell_size_l, cell_size_m):
     counter = np.zeros((Nl, Nm))
     half_l = int(Nl / 2)
     half_m = int(Nm / 2)
-
+    cell_size_error = False
     for i in range(len(uv)):
         scaled_uv = np.copy(uv[i])
         scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nl)
@@ -297,18 +299,17 @@ def grid(Nl, Nm, uv_tracks, d_u, d_v, uv, cell_size_l, cell_size_m):
             y,x = int(np.round(scaled_uv[j][0])), int(np.round(scaled_uv[j][1]))
             x += half_l
             y += half_m
-            if not x >= vis.shape[0] and not y >= vis.shape[1]:
+            if not x >= vis.shape[0] and not y >= vis.shape[1] and not x < -vis.shape[0] and not y < -vis.shape[1]:
                 vis[x][y] += uv_tracks[i][j]
                 counter[x][y] += 1
             else:
-                # Return a error message if the gridding isnt perfect
-                print("BIG ERROR MESSAGE")
+                cell_size_error = True
 
     for i in range(len(vis)):
         for j in range(len(vis[i])):
             if not counter[i][j] == 0:
                 vis[i][j] = vis[i][j] / counter[i][j]
-    return vis
+    return vis, cell_size_error
 
 def plot_sampled_visibilities(point_sources, u_d, v_d):
     u_track = u_d
@@ -329,8 +330,8 @@ def plot_sky_model(l, m, Flux_sources, x, y):
     # Plot sky model in L and M
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
-    plt.xlabel(x)
-    plt.ylabel(y)
+    plt.xlabel(x, size=18)
+    plt.ylabel(y, size=18)
     max_flux = max(Flux_sources)
     if max_flux > 1:
         col = (Flux_sources/max_flux)
@@ -342,20 +343,24 @@ def plot_sky_model(l, m, Flux_sources, x, y):
     plt.scatter(l,m,c=colour,s=8)
     ax.set_facecolor('xkcd:black')
     fig.patch.set_alpha(0)
-    plt.title("Sky Model")
+    plt.title("Sky Model", size=20)
     plt.savefig("Plots/SkyModel.png", transparent=False)
     plt.close()
 
-def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x_title, y_title):
+def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x_title, y_title, cell_size_error):
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
     image = np.abs(image)
     img = plt.figure(figsize=(10,10))
-    plt.title("Reconstructed" + name)
+    plt.title("Reconstructed" + name,size=20)
     plt.set_cmap('nipy_spectral')
     im_vis = plt.imshow(np.real(image), origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
                                                         DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
-    img.colorbar(im_vis)
-    plt.xlabel(x_title)
-    plt.ylabel(y_title)
+    cbr = img.colorbar(im_vis)
+    cbr.set_label('Jy per Beam',size=18)
+    plt.xlabel(x_title,size=18)
+    plt.ylabel(y_title,size=18)
+    if cell_size_error:
+        txt = "INVALID CELL SIZE"
+        plt.figtext(0.5, 0.1, txt, wrap=True, horizontalalignment='center', fontsize=25, color='red')
     plt.savefig('Plots/Reconstructed' + name + '.png', transparent=True)
     plt.close()

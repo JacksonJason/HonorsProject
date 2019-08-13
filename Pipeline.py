@@ -64,30 +64,49 @@ class pipeline(object):
             eha = json_antenna['eha']
             dec = json_antenna['center_dec']
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
-            # asc = json_antenna['center_asc']
             ut.plot_baseline(b, custom_L, custom_f, sha, eha, dec, "CUSTOM")
             uv, uv_tracks, dec_0 = ut.plot_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, cos, custom_layout)
-            # change image method to accept all baselines and grid them all
-            ut.image(uv, uv_tracks, cell_size, cos, dec_0, res)
+            ut.image(uv, uv_tracks, cell_size, cos, dec_0, res, "CUSTOM")
 
     @cherrypy.expose
-    def generate_graphs(self):
-        layout = self.get_antenna_layout()
-        L,f = TR.get_latitude_and_frequency()
-        visibilities = self.make_vis_matrix()
-        ut.plot_array(layout, "TART")
-        b = layout[1] - layout[0] #choose baseline later
-        # need dec0 as well as starting and ending hour angle
-        # ut.plot_baseline(b, L, f, , "TART")
-        # h = np.linspace(h0,h1,num=600)*np.pi/12
-        u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
-        # uv_tracks = ut.plot_sampled_visibilities(point_sources, u_d, v_d)
-        # uv = []
-        # for i in range(len(u_d)):
-        #     uv.append([u_d[i], v_d[i]])
-        # uv = np.array(uv)
+    def generate_graphs(self, cos=None, cell_size=None, res=None):
+        if res is not "" and cos is not "" and cell_size is not "":
+            layout = self.get_antenna_layout()
+            L,f = TR.get_latitude_and_frequency()
+            visibilities = self.make_vis_matrix()
+            ut.plot_array(layout, "TART")
+            #dec_0 is 0
+            # need dec0 as well as starting and ending hour angle
+            # ut.plot_baseline(b, L, f, , "TART")
+            # h = np.linspace(h0,h1,num=600)*np.pi/12
+            all_uv = []
+            all_uv_tracks = []
+            for i in range(len(layout)):
+                for j in range(i+1, len(layout)):
+                    b = layout[j] - layout[i]
+                    u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
+                    uv = []
+                    uv.append([[u_d, v_d]])
+                    uv = np.array(uv)
+                    all_uv.append(uv)
+                    uv_tracks = [[1]]
+                    all_uv_tracks.append(uv_tracks)
+                    b = layout[i] - layout[j]
+                    u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
+                    uv = []
+                    uv.append([[u_d, v_d]])
+                    uv = np.array(uv)
+                    all_uv.append(uv)
+                    uv_tracks = [[1]]
+                    all_uv_tracks.append(uv_tracks)
+            # uv_tracks = ut.plot_sampled_visibilities(point_sources, u_d, v_d)
+            # uv = []
+            # for i in range(len(u_d)):
+            #     uv.append([u_d[i], v_d[i]])
+            # uv = np.array(uv)
+            ut.image(uv, uv_tracks, cell_size, cos, 0, res, "TART")
+            # ut.image(uv, uv_tracks, cell_size, cos, dec_0)
 
-        # ut.image(uv, uv_tracks, cell_size, cos, dec_0)
 
 
     @cherrypy.expose
