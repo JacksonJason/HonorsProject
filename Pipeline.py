@@ -76,8 +76,6 @@ class pipeline(object):
             visibilities = self.make_vis_matrix()
             ut.plot_array(layout, "TART")
             #dec_0 is 0
-            # need dec0 as well as starting and ending hour angle
-            # ut.plot_baseline(b, L, f, , "TART")
             # h = np.linspace(h0,h1,num=600)*np.pi/12
             all_uv = []
             all_uv_tracks = []
@@ -99,13 +97,7 @@ class pipeline(object):
                     all_uv.append(uv)
                     uv_tracks = [[1]]
                     all_uv_tracks.append(uv_tracks)
-            # uv_tracks = ut.plot_sampled_visibilities(point_sources, u_d, v_d)
-            # uv = []
-            # for i in range(len(u_d)):
-            #     uv.append([u_d[i], v_d[i]])
-            # uv = np.array(uv)
             ut.image(uv, uv_tracks, cell_size, cos, 0, res, "TART")
-            # ut.image(uv, uv_tracks, cell_size, cos, dec_0)
 
 
 

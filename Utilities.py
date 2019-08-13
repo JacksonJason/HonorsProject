@@ -262,11 +262,15 @@ def image(uv, uv_tracks, cell_size, cos, dec_0, res, name):
     if cos == "1":
         L = np.cos(dec_0) * np.sin(0)
         M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
-        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"SkyModel", "l", "m", cell_size_error)
-
+        image = image_visibilities(gridded)
         psf = np.ones ((np.array(uv_tracks).shape), dtype=complex)
         psf_grid, cell_size_error = grid(Nl, Nm, psf, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
-        image_visibilities(psf_grid, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"PSF", "l", "m", cell_size_error)
+        psf_image = image_visibilities(psf_grid)
+        scale_factor = psf_image[int(psf_image.shape[0]/2)][int(psf_image.shape[1]/2)]
+        image /= scale_factor
+        psf_image /= scale_factor
+        draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"SkyModel", "l", "m", cell_size_error)
+        draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"PSF", "l", "m", cell_size_error)
 
     else:
         # convert grid to RA/DEC
@@ -347,13 +351,17 @@ def plot_sky_model(l, m, Flux_sources, x, y):
     plt.savefig("Plots/SkyModel.png", transparent=False)
     plt.close()
 
-def image_visibilities(grid, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x_title, y_title, cell_size_error):
+def image_visibilities(grid):
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
     image = np.abs(image)
+    return np.real(image)
+
+
+def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x_title, y_title, cell_size_error):
     img = plt.figure(figsize=(10,10))
     plt.title("Reconstructed" + name,size=20)
     plt.set_cmap('nipy_spectral')
-    im_vis = plt.imshow(np.real(image), origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
+    im_vis = plt.imshow(image, origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
                                                         DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
     cbr = img.colorbar(im_vis)
     cbr.set_label('Jy per Beam',size=18)
