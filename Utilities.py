@@ -14,13 +14,10 @@ def draw_matrix(matrix):
     plt.subplot(121)
     plt.set_cmap('viridis')
     plt.imshow(matrix.real)
-    plt.xlabel("u")
-    plt.ylabel("v")
     plt.title("Real: visibilities")
 
     plt.subplot(122)
     plt.imshow(matrix.imag)
-    plt.xlabel("u")
     plt.title("Imag: visibilities")
     plt.savefig('Plots/Antenna_Visibilities.png', transparent=True)
     plt.close()
