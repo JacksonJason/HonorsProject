@@ -84,21 +84,20 @@ class pipeline(object):
                     b = layout[j] - layout[i]
                     u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
                     uv = []
-                    uv.append([[u_d, v_d]])
+                    uv.append([u_d, v_d])
                     uv = np.array(uv)
                     all_uv.append(uv)
-                    uv_tracks = [[visibilities[i][j]]]
+                    uv_tracks = [visibilities[i][j]]
                     all_uv_tracks.append(uv_tracks)
                     b = layout[i] - layout[j]
                     u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
                     uv = []
-                    uv.append([[u_d, v_d]])
+                    uv.append([u_d, v_d])
                     uv = np.array(uv)
                     all_uv.append(uv)
-                    uv_tracks = [[visibilities[j][i]]]
+                    uv_tracks = [visibilities[j][i]]
                     all_uv_tracks.append(uv_tracks)
-            print(uv_tracks)
-            ut.image(uv, uv_tracks, cell_size, cos, 0, res, "TART")
+            ut.image(all_uv, all_uv_tracks, cell_size, cos, 0, res, "TART")
 
 
 
