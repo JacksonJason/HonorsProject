@@ -12,9 +12,10 @@
           co = $("#cods").val()
           cell_size = $("#cell_size").val()
           resolusion = $("#resolusion").val()
-          cont = resolusion != "" && cell_size != "" && co != ""
+          loc = $("#loc").val()
+          cont = resolusion != "" && cell_size != "" && co != "" && loc != ""
           if (cont) {
-            $.post("/generate_graphs",{cos:co, cell_size:cell_size, res:resolusion})
+            $.post("/generate_graphs",{cos:co, cell_size:cell_size, res:resolusion, loc:loc})
              .done(function(string) {
                var unique = $.now();
                $('#antenna').attr('src', 'static/TARTAntennaLayout.png?' + unique);
@@ -22,6 +23,7 @@
                $('#visibilities').attr('src', 'static/Antenna_Visibilities.png?' + unique);
                $('#c_TART_reconstruction').attr('src', 'static/ReconstructedTARTSkyModel.png?' + unique);
                $('#c_TART_reconstruction_psf').attr('src', 'static/ReconstructedTARTPSF.png?' + unique);
+               $('#c_TART_grid').attr('src', 'static/TARTgrid.png?' + unique);
                alert("SUCCESS: Graphs Generated");
             });
           } else {
@@ -57,23 +59,7 @@
           e.preventDefault();
         });
       });
-      // $(document).ready( function () {
-  		// $('#form').submit( function () {
-      //   e.preventDefault();
 
-        // var input_file = $("#input_file").val().split("\\");
-        // var input = input_file[input_file.length()]
-        // $.post('generate_graphs', {input_file: }, function(data) { });
-
-  			// var formdata = $(this).serialize();
-  			// $.post({
-  			//     type: "POST",
-  			//     url: "generate_graphs",
-  			//     data: formdata,
-  			//  });
-  		// 	return false;
-  		// });
-  	// });
     $(document).ready(function() {
         $('input[id="input_file"]').change(function() {
         path = $("#input_file").val();
@@ -137,10 +123,6 @@
   </div>
     <d class="col-sm-10">
       <h1>{{ target }}</h1>
-      <!-- <form method="post" action="generate_graphs" enctype="multipart/form-data" id="form">
-          <input type="file" name="input_file" id="input_file">
-          <button type="submit" />Generate new graphs
-      </form> -->
       <select id="cods">
          <option value="1">l/m</option>
          <option value="2">RA/DEC</option>\
@@ -158,14 +140,15 @@
          </h4>
        </div>
        <div id="collapse1" class="collapse panel-collapse">
-         <button type="submit" id="generate_graphs" class="btn btn-default btn-primary">Generate new graphs</button>
+         <button type="submit" id="generate_graphs" class="btn btn-default btn-primary" style="margin-top: 0px;">Generate new graphs</button>
+         <select id="loc">
+            <option value="1">ZA</option>
+            <option value="2">NZ</option>\
+          </select>
          <br>
          <div class="col-sm-6 gr">
            <img src="static/TARTAntennaLayout.png" alt="antenna layout" id=antenna  width="512" height="400">
          </div>
-         <!-- <div class="col-sm-6 gr">
-           <img src="static/TARTUVCoverage.png" alt="baseline image" id=T_uv width="400" height="400">
-         </div> <br> -->
          <div class="gr">
            <img src="static/Antenna_Visibilities.png" alt="visibilities" id=visibilities width="512" height="384">
          </div>
@@ -177,6 +160,9 @@
            <img src="static/ReconstructedTARTPSF.png" alt="image alt text" id=c_TART_reconstruction_psf width="512" height="384">
          </div>
          <br>
+         <div>
+           <img src="static/TARTgrid.png" alt="image alt text" id=c_TART_grid width="512" height="384">
+         </div>
        </div>
      </div>
      <div class="panel panel-default">
@@ -190,13 +176,11 @@
          <label class="btn btn-default btn-primary" id="input_label">
            AntennaLayout <input type="file" name="input_file" id="input_file" class="but">
          </label>
-         <!-- <input type="file" name="input_file" id="input_file"> -->
          <label class="btn btn-default btn-primary" id="lsm_label">
            LSM File <input type="file" name="lsm_file" id="lsm_file" class="but">
          </label>
 
          <br>
-         <!-- <input type="file" name="lsm_file" id="lsm_file"> -->
          <button type="submit" id="generate_custom_graphs" class="btn btn-default btn-primary">Generate custom layout graphs</button><br>
          <div class="col-sm-6">
            <img src="static/CustomAntennaLayout.png" alt="image alt text" id=c_antenna  width="512" height="384">
@@ -228,12 +212,6 @@
     </d>
     <div class="col-sm-1">
     </div>
-    <!-- <div class="col-sm-6">
-      <img src="static/TARTAntennaLayout.png" alt="image alt text" id=antenna  width="512" height="384">
-    </div>
-    <div class="col-sm-6">
-      <img src="static/Antenna_Visibilities.png" alt="image alt text" id=visibilities width="512" height="384">
-    </div> <br> -->
 
   {% endblock %}
 </html>

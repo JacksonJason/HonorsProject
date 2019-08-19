@@ -255,7 +255,6 @@ def image(uv, uv_tracks, cell_size, cos, dec_0, res, name):
     # plt.xlabel("l", size=18)
     # plt.ylabel("m", size=18)
     plt.savefig('Plots/' + name + 'grid.png', transparent=True)
-    print(cos)
     if cos == "1":
         L = np.cos(dec_0) * np.sin(0)
         M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)

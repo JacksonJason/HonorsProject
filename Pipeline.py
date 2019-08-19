@@ -9,12 +9,12 @@ env = Environment(loader=FileSystemLoader('html'))
 
 class pipeline(object):
 
-    def get_antenna_layout(self):
-        layoutJSON = TR.antenna_layout()
+    def get_antenna_layout(self, loc):
+        layoutJSON = TR.antenna_layout(loc)
         return np.array(layoutJSON)
 
-    def make_vis_matrix(self):
-        vis = TR.get_visibilities()
+    def make_vis_matrix(self, loc):
+        vis = TR.get_visibilities(loc)
         vis = np.array(vis["data"])
         i,j = self.parse_vis(vis)
         vis_matrix = np.zeros((i+1, j+1)).astype(complex)
@@ -69,11 +69,11 @@ class pipeline(object):
             ut.image(uv, uv_tracks, cell_size, cos, dec_0, res, "CUSTOM")
 
     @cherrypy.expose
-    def generate_graphs(self, cos=None, cell_size=None, res=None):
-        if res is not "" and cos is not "" and cell_size is not "":
-            layout = self.get_antenna_layout()
-            L,f = TR.get_latitude_and_frequency()
-            visibilities = self.make_vis_matrix()
+    def generate_graphs(self, cos=None, cell_size=None, res=None, loc=None):
+        if res is not "" and cos is not "" and cell_size is not "" and loc is not "":
+            layout = self.get_antenna_layout(loc)
+            L,f = TR.get_latitude_and_frequency(loc)
+            visibilities = self.make_vis_matrix(loc)
             ut.plot_array(layout, "TART")
             #dec_0 is 0
             # h = np.linspace(h0,h1,num=600)*np.pi/12
