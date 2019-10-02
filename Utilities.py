@@ -239,8 +239,8 @@ def image(uv, uv_tracks, cell_size, cos, dec_0, res, name):
     degrees_m = float(res)
     Nl = int(np.round(degrees_l / cell_size_l))
     Nm = int(np.round(degrees_m / cell_size_m))
-    Nl = find_closest_power_of_two(Nl)
-    Nm = find_closest_power_of_two(Nm)
+    # Nl = find_closest_power_of_two(Nl)
+    # Nm = find_closest_power_of_two(Nm)
     rad_d_l = cell_size_l * (np.pi/180)
     rad_d_m = cell_size_m * (np.pi/180)
     cell_size_u = 1 / (2 * Nl * rad_d_l)
@@ -248,7 +248,7 @@ def image(uv, uv_tracks, cell_size, cos, dec_0, res, name):
 
     gridded, cell_size_error = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
     img = plt.figure(figsize=(10,10))
-    plt.title("Baseline Grid", size=20)
+    plt.title("Baseline Grid", size=22)
     plt.set_cmap('nipy_spectral')
     im = plt.imshow(np.real(np.abs(gridded)), origin='lower')
     plt.axis('off')
@@ -355,14 +355,14 @@ def image_visibilities(grid):
 
 def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x_title, y_title, cell_size_error):
     img = plt.figure(figsize=(10,10))
-    plt.title("Reconstructed" + name,size=20)
+    plt.title("Reconstructed" + name,size=22)
     plt.set_cmap('nipy_spectral')
     im_vis = plt.imshow(image, origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
                                                         DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
     cbr = img.colorbar(im_vis)
-    cbr.set_label('Jy per Beam',size=18)
-    plt.xlabel(x_title,size=18)
-    plt.ylabel(y_title,size=18)
+    cbr.set_label('Jy per Beam',size=20)
+    plt.xlabel(x_title,size=20)
+    plt.ylabel(y_title,size=20)
     if cell_size_error:
         txt = "INVALID CELL SIZE"
         plt.figtext(0.5, 0.1, txt, wrap=True, horizontalalignment='center', fontsize=25, color='red')
