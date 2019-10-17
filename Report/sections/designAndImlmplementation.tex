@@ -1,0 +1,62 @@
+\subsection{Overview}
+The following chapter will give an overview of the pipeline. It will explain the design decisions of the pipeline. The first section will show a step by step process of creating the pipeline, the second section will explain the various components of the pipeline and the last section will explain the technologies that were used in the pipeline.
+\subsection{Steps for pipeline}
+\textbf{TART}
+\begin{enumerate}
+    \item Load in the Data for the TART interferometer, this being, the antenna layout, the latitude and frequency and the current visibilities. Receive the cell size and resolution from the CherryPy web server.
+    \item Calculate for every antenna pair, the baseline.
+    \item Get the UV coordinates for the baseline and add it to the array of baselines.
+    \item For each baseline add the visibilities to the array
+    \item Create the grid of the size specified.
+    \item Scale the UV coordinates down so that they fit onto the grid.
+    \item Add the visibilities to the grid based on the position in the UV plane. Increment the counter for the grid pixel.
+    \item Once all the visibilities are added, divide each cell by the counter that was created for that cell.
+    \item Do the inverse FFT on the grid.
+    \item Create a grid populated by 1's in the location of the UV coordinates, and do and inverse FFT on it, the point at the center of the array determines the scale factor. 
+    \item Divide the image grid by the scale factor.
+    \item Draw the image using imshow.
+\end{enumerate}
+\textbf{Testing}
+\begin{enumerate}
+    \item Load the custom array layout and sky model. Receive the cell size and resolution from the CherryPy web server.
+    \item Calculate for every antenna pair, the baseline.
+    \item Get the UV coordinates for the baseline and add it to the array of baselines. As this is over a period of time there will be a array or coordinates that creates a track.
+    \item For each baseline calculate the visibilities from the sky model, this is done by using a Fourier series calculation. This is also over a period of time so there is an array of visibilities for each baseline.
+    \item For each baseline add the visibilities array to the array
+    \item Create the grid of the size specified.
+    \item Scale the UV coordinates down so that they fit onto the grid.
+    \item Add the visibilities to the grid based on the position in the UV plane. Increment the counter for the grid pixel.
+    \item Once all the visibilities are added, divide each cell by the counter that was created for that cell.
+    \item Do the inverse FFT on the grid.
+    \item Create a grid populated by 1's in the location of the UV coordinates, and do and inverse FFT on it, the point at the center of the array determines the scale factor. 
+    \item Divide the image grid by the scale factor.
+    \item Draw the image using imshow.
+\end{enumerate}
+\begin{center}
+    \includegraphics[scale=0.5]{images/FlowDiagram.png}
+\end{center}{}
+\subsection{Components}
+There are three main components: Utilities, Requests and Pipeline.
+\begin{center}
+    \includegraphics[scale=0.6]{images/BlockDiagram.png}
+\end{center}{}
+\subsubsection{Utilities}
+The utilities component contains all the functions the the imaging pipeline uses.\\
+It contains all the code that plots the graphs, it contains all the code that converts from one coordinate system to another. It finds the UV tracks and the visibilities associated with them. For the custom array layout, it determines through Fourier transform the sampled visibilities of the sky model, and then plots them. It uses the cell size and resolution to create a grid of visibilities. It converts the grid of visibilities into an image.\\
+The utilities are called by the pipeline component.
+
+\subsubsection{Requests}
+The requests component contains the http requests for interfacing with TART, in New Zealand and South Africa, it contains three requests.
+\begin{itemize}
+    \item \textbf{Antenna Layout} This retrieves the the current antenna layout for the chosen TART interferometer.
+    \item \textbf{Visibilities} This retrieves the latest visibilities from the chosen TART interferometer.
+    \item \textbf{Latitude and Frequency} This retrieves all the information about TART, but all the pipeline needs is the latitude and frequency so the rest of the information is not used.
+\end{itemize}
+The requests are called by the pipeline component.
+
+\subsubsection{Pipeline}
+The pipeline is where CherryPy interfaces with python. It contains two main functions, one for the custom array layout image generation and one for the TART image generation. \\The custom layout generation takes the cell size, resolution, the baseline the user would like to see, a custom array layout of the users choosing and a sky model of the users choosing as input. It then generates the image for that sky model based off that antenna layout and sky model.\\
+The TART image generation function takes the cell size, resolution and which TART interferometer the user would like to use as input. It then generates the image above the specified TART interferomter at that time.
+
+\subsection{Technologies}
+The back end is python, implementing libraries found with pip. The front end is a CherryPy web server\cite{Cherrypy} that calls the back end functions and displays the images and plots that are created. The html page that displays the images uses bootstrap\cite{Bootstrap} in order to display the images nicely depending on the layout of the browser.
