@@ -41,9 +41,9 @@ class pipeline(object):
         return i+1,j
 
     @cherrypy.expose
-    def generate_custom_graphs(self, input_file=None, lsm_file=None, baseline=None, cos=None, cell_size=None, res=None):
+    def generate_custom_graphs(self, input_file=None, lsm_file=None, baseline=None, cell_size=None, res=None):
         upload_path = os.path.dirname(__file__)
-        if res is not "" and input_file is not "" and lsm_file is not "" and baseline is not "" and cos is not "" and cell_size is not "":
+        if res is not "" and input_file is not "" and lsm_file is not "" and baseline is not "" and cell_size is not "":
             bl = baseline.split(" ")
             bl_1 = int(bl[0]) - 1
             bl_2 = int(bl[1]) - 1
@@ -65,12 +65,12 @@ class pipeline(object):
             dec = json_antenna['center_dec']
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
             ut.plot_baseline(b, custom_L, custom_f, sha, eha, dec, "CUSTOM")
-            uv, uv_tracks, dec_0 = ut.plot_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, cos, custom_layout)
-            ut.image(uv, uv_tracks, cell_size, cos, dec_0, res, "CUSTOM")
+            uv, uv_tracks, dec_0 = ut.plot_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, custom_layout)
+            ut.image(uv, uv_tracks, cell_size, dec_0, res, "CUSTOM")
 
     @cherrypy.expose
-    def generate_graphs(self, cos=None, cell_size=None, res=None, loc=None):
-        if res is not "" and cos is not "" and cell_size is not "" and loc is not "":
+    def generate_graphs(self, cell_size=None, loc=None):
+        if cell_size is not "" and loc is not "":
             layout = self.get_antenna_layout(loc)
             L,f = TR.get_latitude_and_frequency(loc)
             visibilities = self.make_vis_matrix(loc)
@@ -97,7 +97,8 @@ class pipeline(object):
                     all_uv.append(uv)
                     uv_tracks = [visibilities[j][i]]
                     all_uv_tracks.append(uv_tracks)
-            ut.image(all_uv, all_uv_tracks, cell_size, cos, 0, res, "TART")
+            res = 2 * 180/np.pi
+            ut.image(all_uv, all_uv_tracks, cell_size   , 0, res, "TART")
 
 
 

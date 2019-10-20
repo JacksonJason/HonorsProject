@@ -13,9 +13,9 @@
           cell_size = $("#cell_size").val()
           resolusion = $("#resolusion").val()
           loc = $("#loc").val()
-          cont = resolusion != "" && cell_size != "" && co != "" && loc != ""
+          cont = cell_size != "" && co != "" && loc != ""
           if (cont) {
-            $.post("/generate_graphs",{cos:co, cell_size:cell_size, res:resolusion, loc:loc})
+            $.post("/generate_graphs",{cell_size:cell_size, loc:loc})
              .done(function(string) {
                var unique = $.now();
                $('#antenna').attr('src', 'static/TARTAntennaLayout.png?' + unique);
@@ -35,12 +35,11 @@
       $(document).ready(function() {
         $("#generate_custom_graphs").click(function(e) {
           base = $("#baseline").val()
-          co = $("#cods").val()
           cell_size = $("#cell_size").val()
           resolusion = $("#resolusion").val()
-          cont = resolusion != "" && $("#input_file").val() != "" && $("#lsm_file").val() != "" && base != "" && cell_size != "" && co != ""
+          cont = resolusion != "" && $("#input_file").val() != "" && $("#lsm_file").val() != "" && base != "" && cell_size != ""
           if (cont) {
-            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val(), baseline:base, cos:co, cell_size:cell_size, res: resolusion})
+            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val(), baseline:base, cell_size:cell_size, res: resolusion})
              .done(function(string) {
                var unique = $.now();
                $('#c_antenna').attr('src', 'static/CustomAntennaLayout.png?' + unique);
@@ -123,10 +122,6 @@
   </div>
     <d class="col-sm-10">
       <h1>{{ target }}</h1>
-      <select id="cods">
-         <option value="1">l/m</option>
-         <option value="2">RA/DEC</option>\
-       </select>
       Baseline: <input type="text" name="baseline" id="baseline">
       Image Cell Size: <input type="text" name="cell_size" id="cell_size">
       Image Resolusion: <input type="text" name="resolusion" id="resolusion">

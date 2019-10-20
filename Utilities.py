@@ -127,7 +127,7 @@ def get_uv_and_tracks(b_ENU, L, f, h, dec, point_sources):
     uv = np.array(uv)
     return uv, u_d, v_d, uu, vv, uv_tracks
 
-def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
+def plot_visibilities(b_ENU, L, f, h0, h1, model_name, layout):
     h = np.linspace(h0,h1,num=600)*np.pi/12
     model = Tigger.load(model_name)
 ############################################################
@@ -162,10 +162,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
     dec = dec_0
     #################################################################################################
 
-    if cos == "1":
-        plot_sky_model(l*(180/np.pi), m*(180/np.pi), Flux_sources, "l [degrees]", "m [degrees]")
-    else:
-        plot_sky_model(RA_sources, DEC_sources, Flux_sources, "RA", "DEC")
+    plot_sky_model(l*(180/np.pi), m*(180/np.pi), Flux_sources, "l [degrees]", "m [degrees]")
 
     uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b_ENU, L, f, h, dec, point_sources)
 
@@ -231,7 +228,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, cos, layout):
     return all_uv, all_uv_tracks, dec_0
 
 
-def image(uv, uv_tracks, cell_size, cos, dec_0, res, name):
+def image(uv, uv_tracks, cell_size, dec_0, res, name):
     c_s = float(cell_size)
     cell_size_l = c_s
     cell_size_m = c_s
@@ -255,27 +252,17 @@ def image(uv, uv_tracks, cell_size, cos, dec_0, res, name):
     # plt.xlabel("l", size=18)
     # plt.ylabel("m", size=18)
     plt.savefig('Plots/' + name + 'grid.png', transparent=True)
-    if cos == "1":
-        L = np.cos(dec_0) * np.sin(0)
-        M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
-        image = image_visibilities(gridded)
-        psf = np.ones ((np.array(uv_tracks).shape), dtype=complex)
-        psf_grid, cell_size_error = grid(Nl, Nm, psf, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
-        psf_image = image_visibilities(psf_grid)
-        scale_factor = psf_image[int(psf_image.shape[0]/2)][int(psf_image.shape[1]/2)]
-        image /= scale_factor
-        psf_image /= scale_factor
-        draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"SkyModel", "l", "m", cell_size_error)
-        draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"PSF", "l", "m", cell_size_error)
-
-    else:
-        # convert grid to RA/DEC
-        # dec = math.asin(m * np.cos(dec_0) + np.sin(dec_0) * math.sqrt(1 - l**2 - m**2))
-        # ra = ra_0 + np.atan(1 / (np.cos(dec_0) * math.sqrt(1 - l**2 - m**2) - m * np.sin(dec_0)))
-        image_visibilities(gridded, Nl, Nm, cell_size_l, cell_size_m, dec_0, ra_0, "SkyModel")
-        # psf = np.ones((Nl, Nm), dtype=complex)
-        # image_visibilities(psf, Nl, Nm, cell_size_l, cell_size_m, L, M, "PSF")
-
+    L = np.cos(dec_0) * np.sin(0)
+    M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
+    image = image_visibilities(gridded)
+    psf = np.ones ((np.array(uv_tracks).shape), dtype=complex)
+    psf_grid, cell_size_error = grid(Nl, Nm, psf, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
+    psf_image = image_visibilities(psf_grid)
+    scale_factor = psf_image[int(psf_image.shape[0]/2)][int(psf_image.shape[1]/2)]
+    image /= scale_factor
+    psf_image /= scale_factor
+    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"SkyModel", "l", "m", cell_size_error)
+    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"PSF", "l", "m", cell_size_error)
 
 def find_closest_power_of_two(number):
     s = 2
