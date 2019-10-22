@@ -1,45 +1,71 @@
 <html>
   {% block head %}
+
     <link href="/static/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
     <script type="text/javascript">
+      /*
+      The below code connects to the CherryPy server and runs the TART pipeline,
+      it takes all the information from the text fields and combo boxes and
+      submits it the the function for the pipeline. It then updates the
+      images on the web page.
+      */
       $(document).ready(function() {
         $("#generate_graphs").click(function(e) {
+
           co = $("#cods").val()
           cell_size = $("#cell_size").val()
           resolusion = $("#resolusion").val()
           loc = $("#loc").val()
           cont = cell_size != "" && co != "" && loc != ""
+
           if (cont) {
             $.post("/generate_graphs",{cell_size:cell_size, loc:loc})
              .done(function(string) {
+
                var unique = $.now();
+
                $('#antenna').attr('src', 'static/TARTAntennaLayout.png?' + unique);
                $('#T_uv').attr('src', 'static/TARTUVCoverage.png?' + unique);
                $('#visibilities').attr('src', 'static/Antenna_Visibilities.png?' + unique);
                $('#c_TART_reconstruction').attr('src', 'static/ReconstructedTART SkyModel.png?' + unique);
                $('#c_TART_reconstruction_psf').attr('src', 'static/ReconstructedTART PSF.png?' + unique);
                $('#c_TART_grid').attr('src', 'static/TARTgrid.png?' + unique);
+
                alert("SUCCESS: Graphs Generated");
             });
           } else {
             alert("FAILURE: Please select all files and fill in all fields")
           }
+
           e.preventDefault();
         });
       });
+
+      /*
+      The below code connects to the CherryPy server and runs the Custom array pipeline,
+      it takes all the information from the text fields and combo boxes and
+      submits it the the function for the pipeline. It then updates the
+      images on the web page.
+      */
       $(document).ready(function() {
         $("#generate_custom_graphs").click(function(e) {
+
           base = $("#baseline").val()
           cell_size = $("#cell_size").val()
           resolusion = $("#resolusion").val()
-          cont = resolusion != "" && $("#input_file").val() != "" && $("#lsm_file").val() != "" && base != "" && cell_size != ""
+          cont = resolusion != "" && $("#input_file").val() != "" && $("#lsm_file").val()
+                  != "" && base != "" && cell_size != ""
+
           if (cont) {
             $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val(), baseline:base, cell_size:cell_size, res: resolusion})
              .done(function(string) {
+
                var unique = $.now();
+
                $('#c_antenna').attr('src', 'static/CustomAntennaLayout.png?' + unique);
                $('#c_uv').attr('src', 'static/CUSTOMUVCoverage.png?' + unique);
                $('#c_sv').attr('src', 'static/SampledVisibilities.png?' + unique);
@@ -48,42 +74,56 @@
                $('#c_reconstruction').attr('src', 'static/ReconstructedCUSTOM SkyModel.png?' + unique);
                $('#c_reconstruction_psf').attr('src', 'static/ReconstructedCUSTOM PSF.png?' + unique);
                $('#c_grid').attr('src', 'static/CUSTOMgrid.png?' + unique);
+
                alert("SUCCESS: Graphs Generated");
             });
           } else {
             alert("FAILURE: Please select all files and fill in all fields")
           }
+
           e.preventDefault();
         });
       });
 
+    /*
+    This code sets the label of the button for the input file when the file is
+    chosen
+    */
     $(document).ready(function() {
         $('input[id="input_file"]').change(function() {
         path = $("#input_file").val();
         p = path.split("\\");
         v = p[p.length - 1];
+
         btn = document.getElementById('input_file');
         document.getElementById('input_label').innerText = v;
         document.getElementById('input_label').appendChild(btn);
       });
     });
 
+    /*
+    This code sets the label of the button for the lsm file when the file is
+    chosen
+    */
     $(document).ready(function() {
         $('input[id="lsm_file"]').change(function() {
-        path = $("#lsm_file").val()
-        p = path.split("\\")
-        v = p[p.length - 1]
+        path = $("#lsm_file").val();
+        p = path.split("\\");
+        v = p[p.length - 1];
+
         btn = document.getElementById('lsm_file');
-        document.getElementById('lsm_label').innerText = v
+        document.getElementById('lsm_label').innerText = v;
         document.getElementById('lsm_label').appendChild(btn);
       });
     });
     </script>
+
     <style>
       d {
         border: 2px solid black;
         margin: 2;
       }
+
       body {
         background-color: #e5e5e5;
       }
@@ -105,6 +145,7 @@
         overflow: hidden;
         margin: 5;
       }
+
       .but {
         position: absolute;
         font-size: 50px;
@@ -112,17 +153,22 @@
         right: 0;
         top: 0;
       }
+
     </style>
+
   {% endblock %}
   {% block body %}
+
   <div class="col-sm-1">
   </div>
+
     <d class="col-sm-10">
       <h1>{{ target }}</h1>
       Baseline: <input type="text" name="baseline" id="baseline">
       Image Cell Size: <input type="text" name="cell_size" id="cell_size">
       Image Resolusion: <input type="text" name="resolusion" id="resolusion">
     <br>
+
     <div class="panel-group" id="accordion">
      <div class="panel panel-default">
        <div class="panel-heading">
@@ -131,6 +177,7 @@
            TART</a>
          </h4>
        </div>
+
        <div id="collapse1" class="collapse panel-collapse">
          <button type="submit" id="generate_graphs" class="btn btn-default btn-primary" style="margin-top: 0px;">Generate new graphs</button>
          <select id="loc">
@@ -138,25 +185,33 @@
             <option value="2">NZ</option>\
           </select>
          <br>
+
          <div class="col-sm-6 gr">
            <img src="static/TARTAntennaLayout.png" alt="antenna layout" id=antenna  width="512" height="400">
          </div>
+
          <div class="gr">
            <img src="static/Antenna_Visibilities.png" alt="visibilities" id=visibilities width="512" height="384">
          </div>
+
          <br>
+
          <div class="col-sm-6">
            <img src="static/ReconstructedTART SkyModel.png" alt="image alt text" id=c_TART_reconstruction width="512" height="384">
          </div>
+
          <div>
            <img src="static/ReconstructedTART PSF.png" alt="image alt text" id=c_TART_reconstruction_psf width="512" height="384">
          </div>
+
          <br>
+
          <div>
            <img src="static/TARTgrid.png" alt="image alt text" id=c_TART_grid width="512" height="384">
          </div>
        </div>
      </div>
+
      <div class="panel panel-default">
        <div class="panel-heading">
          <h4 class="panel-title">
@@ -164,44 +219,61 @@
            CUSTOM LAYOUT</a>
          </h4>
        </div>
+
        <div id="collapse2" class="panel-collapse collapse">
          <label class="btn btn-default btn-primary" id="input_label">
            AntennaLayout <input type="file" name="input_file" id="input_file" class="but">
          </label>
+
          <label class="btn btn-default btn-primary" id="lsm_label">
            LSM File <input type="file" name="lsm_file" id="lsm_file" class="but">
          </label>
 
          <br>
+
          <button type="submit" id="generate_custom_graphs" class="btn btn-default btn-primary">Generate custom layout graphs</button><br>
          <div class="col-sm-6">
            <img src="static/CustomAntennaLayout.png" alt="image alt text" id=c_antenna  width="512" height="384">
          </div>
+
          <div class="col-sm-6">
            <img src="static/CUSTOMUVCoverage.png" alt="image alt text" id=c_uv width="400" height="400">
-         </div> <br>
+         </div>
+
+         <br>
+
          <div class="col-sm-6">
            <img src="static/SampledVisibilities.png" alt="image alt text" id=c_sv  width="512" height="384">
          </div>
+
          <div class="col-sm-6">
            <img src="static/Visibilities.png" alt="image alt text" id=c_visibilities width="512" height="384">
-         </div> <br>
+         </div>
+
+         <br>
+
          <div class="col-sm-6">
            <img src="static/SkyModel.png" alt="image alt text" id=c_skymodel width="512" height="384">
          </div>
+
          <div class="col-sm-6">
            <img src="static/ReconstructedCUSTOM SkyModel.png" alt="image alt text" id=c_reconstruction width="512" height="384">
-         </div> <br>
+         </div>
+
+         <br>
+
          <div class="col-sm-6">
            <img src="static/ReconstructedCUSTOM PSF.png" alt="image alt text" id=c_reconstruction_psf width="512" height="384">
          </div>
+
          <div class="col-sm-6">
            <img src="static/CUSTOMgrid.png" alt="image alt text" id=c_grid width="512" height="384">
-         </div> <br>
+         </div>
        </div>
      </div>
     </div>
     </d>
+    
     <div class="col-sm-1">
     </div>
 
