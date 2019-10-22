@@ -11,9 +11,15 @@ import matplotlib.pylab as pl
 import Tigger
 
 def draw_matrix(matrix):
-    '''
+    """
+    Draws the TART visibilities onto two image planes, one for real and one
+    for imaginary. It saves this plot into a png file in the plots folder.
 
-    '''
+    :param matrix: The complex visibilities
+    :type matrix: complex 2d numpy Array
+
+    :returns: Nothing
+    """
     plt.figure()
     plt.subplot(121)
     plt.set_cmap('viridis')
@@ -27,6 +33,17 @@ def draw_matrix(matrix):
     plt.close()
 
 def get_B(b_ENU, L):
+    """
+    Converts the xyz form of the baseline into the coordinate system XYZ
+
+    :param b_ENU: The baseline to convert
+    :type b_ENU: float array
+
+    :param L: The latitude of the interferometer
+    :type L: float
+
+    :returns: The baseline in XYZ
+    """
     D = math.sqrt(np.sum((b_ENU)**2))
     A = np.arctan2(b_ENU[0],b_ENU[1])
     E = np.arcsin(b_ENU[2]/D)
@@ -36,12 +53,44 @@ def get_B(b_ENU, L):
     return B
 
 def get_lambda(f):
+    """
+    Gets the wavelength for calculations
+
+    :param f: The frequency of the interferometer
+    :type f: float
+
+    :returns: Lambda, wavelength
+    """
     c = scipy.constants.c
     lam = c/f
     return lam
 
-# This code is taken from the fundamentals of interferometry notebook.
-def UVellipse(u,v,w,a,b,v0, name):
+def UVellipse(u,v,a,b,v0, name):
+    """
+    This code is taken from the fundamentals of interferometry notebook.
+    It plots an ellipse for the baseline pair and saves it as a png file in
+    the Plots folder.
+
+    :param u: The u coordinates associated with the baseline
+    :type u: numpy float array
+
+    :param v: The v coordinates associated with the baseline
+    :type v: numpy float array
+
+    :param a: The major axis of the ellipse
+    :type a: float
+
+    :param b: The major axis of the ellipse
+    :type b: float
+
+    :param v0: The center of the ellipse
+    :type v0: float
+
+    :param name: The name to apply to the image file that is produced
+    :type name: str
+
+    :returns: Nothing
+    """
     fig=plt.figure(0, figsize=(8,8))
 
     e1=Ellipse(xy=np.array([0,v0]),width=2*a,height=2*b,angle=0)
@@ -80,24 +129,64 @@ def UVellipse(u,v,w,a,b,v0, name):
     plt.close()
 
 def plot_baseline(b_ENU, L, f, h0, h1, dec, name):
-    # dec = model.dec0
-    B = get_B(b_ENU, L)
+    """
+    Finds the baseline in XYZ coordinates, then calculates the major axis, minor
+    axis and center of the ellipse for the baseline plot, also works out the UV
+    coordinates associated with the baseline.
 
+
+    :param b_ENU: The baseline in xyz format
+    :type b_ENU: float array
+
+    :param L: The latitude of the interferometer
+    :type L: float
+
+    :param f: the frequency of the interferometer
+    :type f: float
+
+    :param h0: The start hour angle
+    :type h0: float
+
+    :param h1: The end hour angle
+    :type h1: float
+
+    :param dec: The declination of the center
+    :type dec: float
+
+    :param name: The name for the image file
+    :type name: str
+
+    :returns: Nothing
+    """
+    B = get_B(b_ENU, L)
     lam = get_lambda(f)
     h = np.linspace(h0,h1,num=600)*np.pi/12
+
     X = B[0]
     Y = B[1]
     Z = B[2]
+
     u = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
     v = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
-    w = lam**(-1)*(np.cos(dec)*np.cos(h)*X-np.cos(dec)*np.sin(h)*Y+np.sin(dec)*Z)
-    # plotBL.UV(u,v,w)
-    a = np.sqrt(X**2+Y**2)/lam # major axis
-    b = a*np.sin(dec)              # minor axis
-    v0 = (Z/lam)*np.cos(dec)  # center of ellipse
-    UVellipse(u,v,w,a,b,v0, name)
+
+    a = np.sqrt(X**2+Y**2)/lam
+    b = a*np.sin(dec)
+    v0 = (Z/lam)*np.cos(dec)
+
+    UVellipse(u,v,a,b,v0, name)
 
 def plot_array(antennas, name):
+    """
+    Plots the array layout for the interferometer.
+
+    :param antennas: The antenna layout array.
+    :type antennas: 2d float array
+
+    :param name: The name for the file to be saved in
+    :type name: str
+
+    :returns: Nothing
+    """
     plt.figure()
     plt.scatter(antennas[:,0], antennas[:,1])
     plt.grid(True)
@@ -108,27 +197,79 @@ def plot_array(antennas, name):
     plt.close()
 
 def get_uv_tracks(b_ENU, L, f, h, dec):
+    """
+    Gets the UV tracks for the baseline
+
+    :param b_ENU: The baseline in xyz format.
+    :type b_ENU: float array
+
+    :param L: The latitude of the interferometer
+    :type L: float
+
+    :param f: the frequency of the interferometer
+    :type f: float
+
+    :param h: The hour angle array
+    :type h: float array
+
+    :param dec: The declination at the center
+    :type dec: float
+
+    :returns: The UV tracks for the baseline
+    """
     B = get_B(b_ENU, L)
     lam = get_lambda(f)
 
     X = B[0]
     Y = B[1]
     Z = B[2]
-    u_d = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
-    v_d = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
-    return u_d, v_d
 
-def get_uv_and_tracks(b_ENU, L, f, h, dec, point_sources):
+    u = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
+    v = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
+
+    return u, v
+
+def get_uv_and_uv_tracks(b_ENU, L, f, h, dec, point_sources):
+    """
+    Gets the UV tracks for the baseline as well as the UV coordinates
+    for the visibilities from the sky model file
+
+    :param b_ENU: The baseline in xyz format.
+    :type b_ENU: float array
+
+    :param L: The latitude of the interferometer
+    :type L: float
+
+    :param f: the frequency of the interferometer
+    :type f: float
+
+    :param h: The hour angle array
+    :type h: float array
+
+    :param dec: The declination at the center
+    :type dec: float
+
+    :param dec: The point sources for the sky model
+    :type dec: numpy array
+
+    :returns: The UV tracks for the baseline and the UV coordinates for the
+              sky model
+    """
     u_d, v_d = get_uv_tracks(b_ENU, L, f, h, dec)
+
     step_size = 200
     u = np.linspace(-1*(np.amax(np.abs(u_d)))-10, np.amax(np.abs(u_d))+10, num=step_size, endpoint=True)
     v = np.linspace(-1*(np.amax(abs(v_d)))-10, np.amax(abs(v_d))+10, num=step_size, endpoint=True)
+
     uu, vv = np.meshgrid(u, v)
-    uv_tracks = plot_sampled_visibilities(point_sources, u_d, v_d)
+    uv_tracks = calculate_uv_tracks(point_sources, u_d, v_d)
+
     uv = []
     for i in range(len(u_d)):
         uv.append([u_d[i], v_d[i]])
+
     uv = np.array(uv)
+
     return uv, u_d, v_d, uu, vv, uv_tracks
 
 def plot_visibilities(b_ENU, L, f, h0, h1, model_name, layout):
@@ -168,7 +309,7 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, layout):
 
     plot_sky_model(l*(180/np.pi), m*(180/np.pi), Flux_sources, "l [degrees]", "m [degrees]")
 
-    uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b_ENU, L, f, h, dec, point_sources)
+    uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_uv_tracks(b_ENU, L, f, h, dec, point_sources)
 
     plt.subplot(121)
     plt.plot(uv_tracks.real)
@@ -221,11 +362,11 @@ def plot_visibilities(b_ENU, L, f, h0, h1, model_name, layout):
     for i in range(len(layout)):
         for j in range(i+1, len(layout)):
             b = layout[j] - layout[i]
-            uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b, L, f, h, dec, point_sources)
+            uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_uv_tracks(b, L, f, h, dec, point_sources)
             all_uv.append(uv)
             all_uv_tracks.append(uv_tracks)
             b = layout[i] - layout[j]
-            uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_tracks(b, L, f, h, dec, point_sources)
+            uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_uv_tracks(b, L, f, h, dec, point_sources)
             all_uv.append(uv)
             all_uv_tracks.append(uv_tracks)
 
@@ -236,33 +377,38 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name):
     c_s = float(cell_size)
     cell_size_l = c_s
     cell_size_m = c_s
+
     degrees_l = float(res)
     degrees_m = float(res)
+
     Nl = int(np.round(degrees_l / cell_size_l))
     Nm = int(np.round(degrees_m / cell_size_m))
     # Nl = find_closest_power_of_two(Nl)
     # Nm = find_closest_power_of_two(Nm)
+
     rad_d_l = cell_size_l * (np.pi/180)
     rad_d_m = cell_size_m * (np.pi/180)
+
     cell_size_u = 1 / (2 * Nl * rad_d_l)
     cell_size_v = 1 / (2 * Nm * rad_d_m)
 
-    gridded, cell_size_error = grid(Nl, Nm, uv_tracks, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
+    gridded, cell_size_error = grid(Nl, Nm, uv_tracks, uv, cell_size_l, cell_size_m)
     img = plt.figure(figsize=(10,10))
+
     plt.title("Baseline Grid", size=22)
     plt.set_cmap('nipy_spectral')
     im = plt.imshow(np.real(np.abs(gridded)), origin='lower')
     plt.axis('off')
-    # plt.xlabel("l", size=18)
-    # plt.ylabel("m", size=18)
     plt.savefig('Plots/' + name + 'grid.png', transparent=True)
+
     L = np.cos(dec_0) * np.sin(0)
     M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
 
     image = image_visibilities(gridded)
     psf = np.ones ((np.array(uv_tracks).shape), dtype=complex)
-    psf_grid, cell_size_error = grid(Nl, Nm, psf, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
+    psf_grid, cell_size_error = grid(Nl, Nm, psf, uv, cell_size_l, cell_size_m)
     psf_image = image_visibilities(psf_grid)
+
     scale_factor = psf_image[int(psf_image.shape[0]/2)][int(psf_image.shape[1]/2)]
     image /= scale_factor
     psf_image /= scale_factor
@@ -271,6 +417,14 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name):
     draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l", "m", cell_size_error)
 
 def find_closest_power_of_two(number):
+    """
+    Finds the closest power of two
+
+    :param number: The number to find the power for
+    :type number: int
+
+    :returns: The next closest power of two for the number.
+    """
     s = 2
     for i in range(0, 15):
         if number < s:
@@ -278,16 +432,43 @@ def find_closest_power_of_two(number):
         else:
             s *= 2
 
-def grid(Nl, Nm, uv_tracks, d_u, d_v, uv, cell_size_l, cell_size_m):
+def grid(Nl, Nm, uv_tracks, uv, cell_size_l, cell_size_m):
+    """
+    Creates and places the visibilities onto a 2d grid. If more than one visibility
+    is at the same position it is divided by the number of visibilities at that position.
+
+    :param Nl: The image size in the l dimension
+    :type Nl: int
+
+    :param Nm: The image size in the m dimension
+    :type Nm: int
+
+    :param uv_tracks: The uv tracks for the baseline
+    :type uv_tracks: numpy float array
+
+    :param uv: The UV coordinates to apply to the grid
+    :type uv: numpy float array.
+
+    :param cell_size_l: The cell size in the l direction
+    :type cell_size_l: float
+
+    :param cell_size_m: The cell size in the l direction
+    :type cell_size_m: float
+
+    :returns: The visibility grid and a boolean containing whether or not the cell
+              size prduced an error.
+    """
     vis = np.zeros((Nl, Nm), dtype=complex)
     counter = np.zeros((Nl, Nm))
     half_l = int(Nl / 2)
     half_m = int(Nm / 2)
     cell_size_error = False
+
     for i in range(len(uv)):
         scaled_uv = np.copy(uv[i])
         scaled_uv[:,0] *= np.deg2rad(cell_size_l * Nl)
         scaled_uv[:,1] *= np.deg2rad(cell_size_m * Nm)
+
         for j in range(len(scaled_uv)):
             y,x = int(np.round(scaled_uv[j][0])), int(np.round(scaled_uv[j][1]))
             x += half_l
@@ -302,37 +483,68 @@ def grid(Nl, Nm, uv_tracks, d_u, d_v, uv, cell_size_l, cell_size_m):
         for j in range(len(vis[i])):
             if not counter[i][j] == 0:
                 vis[i][j] = vis[i][j] / counter[i][j]
+
     return vis, cell_size_error
 
-def plot_sampled_visibilities(point_sources, u_d, v_d):
-    u_track = u_d
-    v_track = v_d
-    z = np.zeros(u_track.shape).astype(complex)
-    plt.figure()
+def calculate_uv_tracks(point_sources, u, v):
+    """
+    Calculates the UV tracks using a fourier transform.
 
+    :param point_sources: The point source to plot
+    :type point_sources: numpy float array
+
+    :param u: The u coordinates of the uv tracks
+    :type u: numpy float array
+
+    :param v: The v coordinates of the uv tracks
+    :type v: numpy float array
+
+    :returns: The UV tracks/coordinates for the baseline and point source
+    """
+    z = np.zeros(u.shape).astype(complex)
     s = point_sources.shape
     for counter in range(0, s[0]):
         A_i = point_sources[counter,0]
         l_i = point_sources[counter,1]
         m_i = point_sources[counter,2]
-        z += A_i*np.exp(-1*2*np.pi*1j*((u_track*l_i)+(v_track*m_i)))
+        z += A_i*np.exp(-1*2*np.pi*1j*((u*l_i)+(v*m_i)))
 
     return z
 
 def plot_sky_model(l, m, Flux_sources, x, y):
-    # Plot sky model in L and M
+    """
+    Plots the sky model from the LSM file and saves it into the plots folder.
+
+    :param l: The l coordinates of the sky model
+    :type l: numpy array
+
+    :param m: The m coordinates of the sky model
+    :type m: numpy array
+
+    :param Flux_sources: The brightness of the sources
+    :type Flux_sources: numpy array
+
+    :param x: The name for the x axis
+    :type x: str
+
+    :param y: The name for the y axis
+    :type y: str
+    """
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
     plt.xlabel(x, size=18)
     plt.ylabel(y, size=18)
     max_flux = max(Flux_sources)
+
     if max_flux > 1:
         col = (Flux_sources/max_flux)
     else:
         col = Flux_sources
+
     colour = []
     for i in col:
         colour.append((i,i,i))
+
     plt.scatter(l,m,c=colour,s=8)
     ax.set_facecolor('xkcd:black')
     fig.patch.set_alpha(0)
@@ -341,20 +553,70 @@ def plot_sky_model(l, m, Flux_sources, x, y):
     plt.close()
 
 def image_visibilities(grid):
+    """
+    Using the inverse fourier transform, converts the grid into an image
+
+    :param grid: The grid to transform
+    :type grid: 2d numpy array
+
+    :returns: An image in matrix form
+    """
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(grid)))
     image = np.abs(image)
     return np.real(image)
 
 
-def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x_title, y_title, cell_size_error):
+def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name,
+                x_title, y_title, cell_size_error):
+    """
+    Draws the image onto a figure, adds a color map to the side and draws circles
+    for the declination.
+
+    :param image: The image matrix to draw
+    :type image: 2d Numpy array
+
+    :param Nl: Image size in l direction
+    :type Nl: int
+
+    :param Nm: Image size in m direction
+    :type Nm: int
+
+    :param cell_size_l: cell size in l direction
+    :type cell_size_l: float
+
+    :param cell_size_m: cell size in m direction
+    :type cell_size_m: float
+
+    :param L: The L coordinate of the center of the view, used to center the image correctly
+    :type L: float
+
+    :param M: The m coordinate of the center of the view, used to center the image correctly
+    :type M: float
+
+    :param name: The name of the image to save with
+    :type name: str
+
+    :param x_title: The x axis name
+    :type x_title: str
+
+    :param y_title: The y axis name
+    :type y_title: str
+
+    :param cell_size_error: whether or not the cell size produced an error boolean
+    :type cell_size_error: boolean
+
+    :returns: Nothing
+    """
     img = plt.figure(figsize=(10,10))
     plt.title("Reconstructed " + name,size=22)
     plt.set_cmap('nipy_spectral')
-    # im_vis = plt.imshow(image, origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
-    #                                                     DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
+
+    # im_vis = plt.imshow(image, origin='lower', extent=[L - Nl / 2 * cell_size_l, L + Nl / 2 * cell_size_l,
+    #                                                     M - Nm / 2 * cell_size_m, M + Nm / 2 * cell_size_m])
     axc = plt.gca()
-    im_vis = axc.imshow(image, origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
-                                                        DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
+    im_vis = axc.imshow(image, origin='lower', extent=[L - Nl / 2 * cell_size_l, L + Nl / 2 * cell_size_l,
+                                                        M - Nm / 2 * cell_size_m, M + Nm / 2 * cell_size_m])
+
     for i in range(10,91,10):
         d_ra = i-0
         # increments of 10
@@ -368,8 +630,10 @@ def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x
     plt.ylabel(y_title,size=20)
     plt.axvline(x=0,color='k')
     plt.axhline(y=0,color='k')
+
     if cell_size_error:
         txt = "INVALID CELL SIZE"
         plt.figtext(0.5, 0.1, txt, wrap=True, horizontalalignment='center', fontsize=25, color='red')
+
     plt.savefig('Plots/Reconstructed' + name + '.png', transparent=True)
     plt.close()

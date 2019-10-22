@@ -9,6 +9,56 @@ env = Environment(loader=FileSystemLoader('html'))
 
 class pipeline(object):
 
+    def make_vis_matrix(self, loc):
+        """
+        Requests the visibilities from the API, then converts that into a 2d
+        array of visibilities.
+
+        :param loc: The location of the interferometer, NZ or SA
+        :type loc: str
+
+        :returns: A matrix of visibilities
+        """
+        vis = TR.get_visibilities(loc)
+        vis = np.array(vis["data"])
+        i,j = self.parse_vis(vis)
+        vis_matrix = np.zeros((i+1, j+1)).astype(complex)
+
+        for v in vis:
+            vis_matrix[v["i"]][v["j"]] = v["re"] + 1j*v["im"]
+
+        cc = vis_matrix.T
+        cc = np.conj(cc)
+
+        for i in range(cc.shape[0]):
+            cc[i][i] = 0 + 0j
+
+        vis_matrix = vis_matrix + cc
+        ut.draw_matrix(vis_matrix)
+
+        return vis_matrix
+
+    def parse_vis(self, vis):
+        """
+        Finds the maximum i and j postions in the vis array
+
+        :param vis: The visibility to convert
+        :type vis: numpy array
+
+        :returns: the x and y max coordinates
+        """
+        i = 0
+        j = 0
+
+        for v in vis:
+            if v['i'] >= i:
+                i = v['i']
+
+            if v['j'] >= j:
+                j = v['j']
+
+        return i+1,j
+
     def get_antenna_layout(self, loc):
         """
         Gets the antenna layout and returns it in JSON format.
@@ -44,16 +94,19 @@ class pipeline(object):
         :returns: nothing
         """
         upload_path = os.path.dirname(__file__)
-        if res is not "" and input_file is not "" and lsm_file is not "" and baseline is not "" and cell_size is not "":
+        if (res is not "" and input_file is not "" and lsm_file is not ""
+            and baseline is not "" and cell_size is not ""):
+
             bl = baseline.split(" ")
             bl_1 = int(bl[0]) - 1
             bl_2 = int(bl[1]) - 1
             input_file = input_file.split("\\")[-1]
             lsm_file = lsm_file.split("\\")[-1]
-            input_file = os.path.normpath(
-            os.path.join(upload_path, input_file))
+            input_file = os.path.normpath(os.path.join(upload_path, input_file))
+
             with open("Antenna_Layouts/" + input_file) as outfile:
                 json_antenna = json.load(outfile)
+
             custom_layout = np.array(json_antenna['antennas'])
             ut.plot_array(custom_layout, "Custom")
             b = custom_layout[bl_2] - custom_layout[bl_1]
@@ -61,10 +114,12 @@ class pipeline(object):
             custom_L = (np.pi/180)* (custom_L[0] + custom_L[1]/60. + custom_L[2]/3600.)
             custom_f = json_antenna['frequency']
             custom_f = custom_f * 10**9
+
             sha = json_antenna['sha']
             eha = json_antenna['eha']
             dec = json_antenna['center_dec']
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
+
             ut.plot_baseline(b, custom_L, custom_f, sha, eha, dec, "CUSTOM")
             uv, uv_tracks, dec_0 = ut.plot_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, custom_layout)
             ut.image(uv, uv_tracks, cell_size, dec_0, res, "CUSTOM")
@@ -89,9 +144,11 @@ class pipeline(object):
             L,f = TR.get_latitude_and_frequency(loc)
             visibilities = self.make_vis_matrix(loc)
             ut.plot_array(layout, "TART")
+
             # dec_0 is 0 as it is TART
             all_uv = []
             all_uv_tracks = []
+
             for i in range(len(layout)):
                 for j in range(i+1, len(layout)):
                     b = layout[j] - layout[i]
@@ -102,6 +159,7 @@ class pipeline(object):
                     all_uv.append(uv)
                     uv_tracks = [visibilities[i][j]]
                     all_uv_tracks.append(uv_tracks)
+
                     b = layout[i] - layout[j]
                     u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
                     uv = []
@@ -110,9 +168,9 @@ class pipeline(object):
                     all_uv.append(uv)
                     uv_tracks = [visibilities[j][i]]
                     all_uv_tracks.append(uv_tracks)
+
             res = 2 * 180/np.pi
             ut.image(all_uv, all_uv_tracks, cell_size, 0, res, "TART")
-
 
 
     @cherrypy.expose
