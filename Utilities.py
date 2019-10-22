@@ -10,6 +10,22 @@ from matplotlib.patches import Ellipse
 import matplotlib.pylab as pl
 import Tigger
 
+def find_closest_power_of_two(number):
+    """
+    Finds the closest power of two
+
+    :param number: The number to find the power for
+    :type number: int
+
+    :returns: The next closest power of two for the number.
+    """
+    s = 2
+    for i in range(0, 15):
+        if number < s:
+            return s
+        else:
+            s *= 2
+
 def draw_matrix(matrix):
     """
     Draws the TART visibilities onto two image planes, one for real and one
@@ -64,6 +80,53 @@ def get_lambda(f):
     c = scipy.constants.c
     lam = c/f
     return lam
+
+def plot_baseline(b_ENU, L, f, h0, h1, dec, name):
+    """
+    Finds the baseline in XYZ coordinates, then calculates the major axis, minor
+    axis and center of the ellipse for the baseline plot, also works out the UV
+    coordinates associated with the baseline.
+
+
+    :param b_ENU: The baseline in xyz format
+    :type b_ENU: float array
+
+    :param L: The latitude of the interferometer
+    :type L: float
+
+    :param f: the frequency of the interferometer
+    :type f: float
+
+    :param h0: The start hour angle
+    :type h0: float
+
+    :param h1: The end hour angle
+    :type h1: float
+
+    :param dec: The declination of the center
+    :type dec: float
+
+    :param name: The name for the image file
+    :type name: str
+
+    :returns: Nothing
+    """
+    B = get_B(b_ENU, L)
+    lam = get_lambda(f)
+    h = np.linspace(h0,h1,num=600)*np.pi/12
+
+    X = B[0]
+    Y = B[1]
+    Z = B[2]
+
+    u = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
+    v = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
+
+    a = np.sqrt(X**2+Y**2)/lam
+    b = a*np.sin(dec)
+    v0 = (Z/lam)*np.cos(dec)
+
+    UVellipse(u,v,a,b,v0, name)
 
 def UVellipse(u,v,a,b,v0, name):
     """
@@ -128,53 +191,6 @@ def UVellipse(u,v,a,b,v0, name):
     plt.savefig('Plots/' + name + 'UVCoverage.png', transparent=True)
     plt.close()
 
-def plot_baseline(b_ENU, L, f, h0, h1, dec, name):
-    """
-    Finds the baseline in XYZ coordinates, then calculates the major axis, minor
-    axis and center of the ellipse for the baseline plot, also works out the UV
-    coordinates associated with the baseline.
-
-
-    :param b_ENU: The baseline in xyz format
-    :type b_ENU: float array
-
-    :param L: The latitude of the interferometer
-    :type L: float
-
-    :param f: the frequency of the interferometer
-    :type f: float
-
-    :param h0: The start hour angle
-    :type h0: float
-
-    :param h1: The end hour angle
-    :type h1: float
-
-    :param dec: The declination of the center
-    :type dec: float
-
-    :param name: The name for the image file
-    :type name: str
-
-    :returns: Nothing
-    """
-    B = get_B(b_ENU, L)
-    lam = get_lambda(f)
-    h = np.linspace(h0,h1,num=600)*np.pi/12
-
-    X = B[0]
-    Y = B[1]
-    Z = B[2]
-
-    u = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
-    v = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
-
-    a = np.sqrt(X**2+Y**2)/lam
-    b = a*np.sin(dec)
-    v0 = (Z/lam)*np.cos(dec)
-
-    UVellipse(u,v,a,b,v0, name)
-
 def plot_array(antennas, name):
     """
     Plots the array layout for the interferometer.
@@ -196,9 +212,9 @@ def plot_array(antennas, name):
     plt.savefig('Plots/' + name + 'AntennaLayout.png', transparent=True)
     plt.close()
 
-def get_uv_tracks(b_ENU, L, f, h, dec):
+def get_visibilities(b_ENU, L, f, h0, h1, model_name, layout):
     """
-    Gets the UV tracks for the baseline
+    Gets the visibilities from the sky model, also calculates the uv_tracks
 
     :param b_ENU: The baseline in xyz format.
     :type b_ENU: float array
@@ -209,25 +225,118 @@ def get_uv_tracks(b_ENU, L, f, h, dec):
     :param f: the frequency of the interferometer
     :type f: float
 
-    :param h: The hour angle array
-    :type h: float array
+    :param h0: The start hour angle
+    :type h0: float
 
-    :param dec: The declination at the center
-    :type dec: float
+    :param h1: The end hour angle
+    :type h1: float
 
-    :returns: The UV tracks for the baseline
+    :param model_name: The name of the sky model
+    :type model_name: str
+
+    :param layout: The antenna layout
+    :type layout: numpy float array
+
+    :returns: The visibilities, the UV tracks, and the center declination
     """
-    B = get_B(b_ENU, L)
-    lam = get_lambda(f)
+    h = np.linspace(h0,h1,num=600)*np.pi/12
+    point_sources, l, m, dec, flux_sources = load_sky_model(model_name)
 
-    X = B[0]
-    Y = B[1]
-    Z = B[2]
+    plot_sky_model(l*(180/np.pi), m*(180/np.pi), flux_sources, "l [degrees]", "m [degrees]")
 
-    u = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
-    v = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
+    uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_uv_tracks(b_ENU, L, f, h, dec, point_sources)
+    plot_uv_tracks(uv_tracks)
 
-    return u, v
+    plot_visibilities(u_d, v_d, uu, vv, point_sources)
+    all_uv_tracks, all_uv = get_all_uv_and_uv_tracks(L, f, h, dec, point_sources, layout)
+
+    return all_uv, all_uv_tracks, dec
+
+def load_sky_model(model_name):
+    """
+    Loads the sky model and extracts all the necessary information.
+
+    :param model_name: The name of the sky model to be loaded
+    :type model_name: str
+
+    :returns: The point sources from the loaded sky model, the l coordinates of
+              the points, the m coordinates of the points, the center declination,
+              the flux sources
+    """
+    model = Tigger.load(model_name)
+    RA_sources = []
+    DEC_sources = []
+    Flux_sources = []
+
+    for val in model.sources:
+        RA_sources.append(val.pos.ra)
+        DEC_sources.append(val.pos.dec)
+        Flux_sources.append(val.flux.I)
+
+    RA_sources = np.array(RA_sources)
+    DEC_sources = np.array(DEC_sources)
+    Flux_sources = np.array(Flux_sources)
+
+    ra_0 = model.ra0
+    dec_0 = model.dec0
+    ra_0_rad = ra_0 * (np.pi/12)
+    dec_0_rad = dec_0 * (np.pi/180)
+
+    RA_rad = RA_sources*(np.pi/12)
+    DEC_rad = DEC_sources*(np.pi/180)
+    RA_delta_rad = RA_rad-ra_0_rad
+
+    l = np.cos(DEC_rad)*np.sin(RA_delta_rad)
+    m = (np.sin(DEC_rad)*np.cos(dec_0_rad)-np.cos(DEC_rad)*np.sin(dec_0_rad)*np.cos(RA_delta_rad))
+
+    point_sources = np.zeros((len(RA_sources),3))
+    point_sources[:,0] = Flux_sources
+    point_sources[:,1] = l[0:]
+    point_sources[:,2] = m[0:]
+    dec = dec_0
+
+    return point_sources, l, m, dec_0, Flux_sources
+
+def plot_sky_model(l, m, Flux_sources, x, y):
+    """
+    Plots the sky model from the LSM file and saves it into the plots folder.
+
+    :param l: The l coordinates of the sky model
+    :type l: numpy array
+
+    :param m: The m coordinates of the sky model
+    :type m: numpy array
+
+    :param Flux_sources: The brightness of the sources
+    :type Flux_sources: numpy array
+
+    :param x: The name for the x axis
+    :type x: str
+
+    :param y: The name for the y axis
+    :type y: str
+    """
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111)
+    plt.xlabel(x, size=18)
+    plt.ylabel(y, size=18)
+    max_flux = max(Flux_sources)
+
+    if max_flux > 1:
+        col = (Flux_sources/max_flux)
+    else:
+        col = Flux_sources
+
+    colour = []
+    for i in col:
+        colour.append((i,i,i))
+
+    plt.scatter(l,m,c=colour,s=8)
+    ax.set_facecolor('xkcd:black')
+    fig.patch.set_alpha(0)
+    plt.title("Sky Model", size=20)
+    plt.savefig("Plots/SkyModel.png", transparent=False)
+    plt.close()
 
 def get_uv_and_uv_tracks(b_ENU, L, f, h, dec, point_sources):
     """
@@ -271,6 +380,86 @@ def get_uv_and_uv_tracks(b_ENU, L, f, h, dec, point_sources):
     uv = np.array(uv)
 
     return uv, u_d, v_d, uu, vv, uv_tracks
+
+def get_uv_tracks(b_ENU, L, f, h, dec):
+    """
+    Gets the UV tracks for the baseline
+
+    :param b_ENU: The baseline in xyz format.
+    :type b_ENU: float array
+
+    :param L: The latitude of the interferometer
+    :type L: float
+
+    :param f: the frequency of the interferometer
+    :type f: float
+
+    :param h: The hour angle array
+    :type h: float array
+
+    :param dec: The declination at the center
+    :type dec: float
+
+    :returns: The UV tracks for the baseline
+    """
+    B = get_B(b_ENU, L)
+    lam = get_lambda(f)
+
+    X = B[0]
+    Y = B[1]
+    Z = B[2]
+
+    u = lam**(-1)*(np.sin(h)*X+np.cos(h)*Y)
+    v = lam**(-1)*(-np.sin(dec)*np.cos(h)*X+np.sin(dec)*np.sin(h)*Y+np.cos(dec)*Z)
+
+    return u, v
+
+def calculate_uv_tracks(point_sources, u, v):
+    """
+    Calculates the UV tracks using a fourier transform.
+
+    :param point_sources: The point source to plot
+    :type point_sources: numpy float array
+
+    :param u: The u coordinates of the uv tracks
+    :type u: numpy float array
+
+    :param v: The v coordinates of the uv tracks
+    :type v: numpy float array
+
+    :returns: The UV tracks/coordinates for the baseline and point source
+    """
+    z = np.zeros(u.shape).astype(complex)
+    s = point_sources.shape
+    for counter in range(0, s[0]):
+        A_i = point_sources[counter,0]
+        l_i = point_sources[counter,1]
+        m_i = point_sources[counter,2]
+        z += A_i*np.exp(-1*2*np.pi*1j*((u*l_i)+(v*m_i)))
+
+    return z
+
+def plot_uv_tracks(uv_tracks):
+    """
+    Plots the UV tracks
+
+    :param uv_tracks: The UV tracks of the baseline
+    :type uv_tracks: numpy float array
+
+    :returns: Nothing
+    """
+    plt.subplot(121)
+    plt.plot(uv_tracks.real)
+    plt.xlabel("Timeslots")
+    plt.ylabel("Jy")
+    plt.title("Real: sampled visibilities")
+
+    plt.subplot(122)
+    plt.plot(uv_tracks.imag)
+    plt.xlabel("Timeslots")
+    plt.title("Imag: sampled visibilities")
+    plt.savefig('Plots/SampledVisibilities.png', transparent=True)
+    plt.close()
 
 def plot_visibilities(u, v, uu, vv, point_sources):
     """
@@ -363,115 +552,6 @@ def get_all_uv_and_uv_tracks(L, f, h, dec, point_sources, layout):
 
     return all_uv_tracks, all_uv
 
-def plot_uv_tracks(uv_tracks):
-    """
-    Plots the UV tracks
-
-    :param uv_tracks: The UV tracks of the baseline
-    :type uv_tracks: numpy float array
-
-    :returns: Nothing
-    """
-    plt.subplot(121)
-    plt.plot(uv_tracks.real)
-    plt.xlabel("Timeslots")
-    plt.ylabel("Jy")
-    plt.title("Real: sampled visibilities")
-
-    plt.subplot(122)
-    plt.plot(uv_tracks.imag)
-    plt.xlabel("Timeslots")
-    plt.title("Imag: sampled visibilities")
-    plt.savefig('Plots/SampledVisibilities.png', transparent=True)
-    plt.close()
-
-def load_sky_model(model_name):
-    """
-    Loads the sky model and extracts all the necessary information.
-
-    :param model_name: The name of the sky model to be loaded
-    :type model_name: str
-
-    :returns: The point sources from the loaded sky model, the l coordinates of
-              the points, the m coordinates of the points, the center declination,
-              the flux sources
-    """
-    model = Tigger.load(model_name)
-    RA_sources = []
-    DEC_sources = []
-    Flux_sources = []
-
-    for val in model.sources:
-        RA_sources.append(val.pos.ra)
-        DEC_sources.append(val.pos.dec)
-        Flux_sources.append(val.flux.I)
-
-    RA_sources = np.array(RA_sources)
-    DEC_sources = np.array(DEC_sources)
-    Flux_sources = np.array(Flux_sources)
-
-    ra_0 = model.ra0
-    dec_0 = model.dec0
-    ra_0_rad = ra_0 * (np.pi/12)
-    dec_0_rad = dec_0 * (np.pi/180)
-
-    RA_rad = RA_sources*(np.pi/12)
-    DEC_rad = DEC_sources*(np.pi/180)
-    RA_delta_rad = RA_rad-ra_0_rad
-
-    l = np.cos(DEC_rad)*np.sin(RA_delta_rad)
-    m = (np.sin(DEC_rad)*np.cos(dec_0_rad)-np.cos(DEC_rad)*np.sin(dec_0_rad)*np.cos(RA_delta_rad))
-
-    point_sources = np.zeros((len(RA_sources),3))
-    point_sources[:,0] = Flux_sources
-    point_sources[:,1] = l[0:]
-    point_sources[:,2] = m[0:]
-    dec = dec_0
-
-    return point_sources, l, m, dec_0, Flux_sources
-
-
-def get_visibilities(b_ENU, L, f, h0, h1, model_name, layout):
-    """
-    Gets the visibilities from the sky model, also calculates the uv_tracks
-
-    :param b_ENU: The baseline in xyz format.
-    :type b_ENU: float array
-
-    :param L: The latitude of the interferometer
-    :type L: float
-
-    :param f: the frequency of the interferometer
-    :type f: float
-
-    :param h0: The start hour angle
-    :type h0: float
-
-    :param h1: The end hour angle
-    :type h1: float
-
-    :param model_name: The name of the sky model
-    :type model_name: str
-
-    :param layout: The antenna layout
-    :type layout: numpy float array
-
-    :returns: The visibilities, the UV tracks, and the center declination
-    """
-    h = np.linspace(h0,h1,num=600)*np.pi/12
-    point_sources, l, m, dec, flux_sources = load_sky_model(model_name)
-
-    plot_sky_model(l*(180/np.pi), m*(180/np.pi), flux_sources, "l [degrees]", "m [degrees]")
-
-    uv, u_d, v_d, uu, vv, uv_tracks = get_uv_and_uv_tracks(b_ENU, L, f, h, dec, point_sources)
-    plot_uv_tracks(uv_tracks)
-
-    plot_visibilities(u_d, v_d, uu, vv, point_sources)
-    all_uv_tracks, all_uv = get_all_uv_and_uv_tracks(L, f, h, dec, point_sources, layout)
-
-    return all_uv, all_uv_tracks, dec
-
-
 def image(uv, uv_tracks, cell_size, dec_0, res, name):
     """
     Calculates the Resolusion from the cell size and the provided resolution,
@@ -530,10 +610,10 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name):
     L = np.cos(dec_0) * np.sin(0)
     M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
 
-    image = image_visibilities(gridded)
+    image = fourier_transform_grid(gridded)
     psf = np.ones ((np.array(uv_tracks).shape), dtype=complex)
     psf_grid, cell_size_error = grid(Nl, Nm, psf, uv, cell_size_l, cell_size_m)
-    psf_image = image_visibilities(psf_grid)
+    psf_image = fourier_transform_grid(psf_grid)
 
     scale_factor = psf_image[int(psf_image.shape[0]/2)][int(psf_image.shape[1]/2)]
     image /= scale_factor
@@ -541,22 +621,6 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name):
 
     draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " SkyModel", "l", "m", cell_size_error)
     draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l", "m", cell_size_error)
-
-def find_closest_power_of_two(number):
-    """
-    Finds the closest power of two
-
-    :param number: The number to find the power for
-    :type number: int
-
-    :returns: The next closest power of two for the number.
-    """
-    s = 2
-    for i in range(0, 15):
-        if number < s:
-            return s
-        else:
-            s *= 2
 
 def grid(Nl, Nm, uv_tracks, uv, cell_size_l, cell_size_m):
     """
@@ -612,73 +676,7 @@ def grid(Nl, Nm, uv_tracks, uv, cell_size_l, cell_size_m):
 
     return vis, cell_size_error
 
-def calculate_uv_tracks(point_sources, u, v):
-    """
-    Calculates the UV tracks using a fourier transform.
-
-    :param point_sources: The point source to plot
-    :type point_sources: numpy float array
-
-    :param u: The u coordinates of the uv tracks
-    :type u: numpy float array
-
-    :param v: The v coordinates of the uv tracks
-    :type v: numpy float array
-
-    :returns: The UV tracks/coordinates for the baseline and point source
-    """
-    z = np.zeros(u.shape).astype(complex)
-    s = point_sources.shape
-    for counter in range(0, s[0]):
-        A_i = point_sources[counter,0]
-        l_i = point_sources[counter,1]
-        m_i = point_sources[counter,2]
-        z += A_i*np.exp(-1*2*np.pi*1j*((u*l_i)+(v*m_i)))
-
-    return z
-
-def plot_sky_model(l, m, Flux_sources, x, y):
-    """
-    Plots the sky model from the LSM file and saves it into the plots folder.
-
-    :param l: The l coordinates of the sky model
-    :type l: numpy array
-
-    :param m: The m coordinates of the sky model
-    :type m: numpy array
-
-    :param Flux_sources: The brightness of the sources
-    :type Flux_sources: numpy array
-
-    :param x: The name for the x axis
-    :type x: str
-
-    :param y: The name for the y axis
-    :type y: str
-    """
-    fig = plt.figure(figsize=(10,10))
-    ax = fig.add_subplot(111)
-    plt.xlabel(x, size=18)
-    plt.ylabel(y, size=18)
-    max_flux = max(Flux_sources)
-
-    if max_flux > 1:
-        col = (Flux_sources/max_flux)
-    else:
-        col = Flux_sources
-
-    colour = []
-    for i in col:
-        colour.append((i,i,i))
-
-    plt.scatter(l,m,c=colour,s=8)
-    ax.set_facecolor('xkcd:black')
-    fig.patch.set_alpha(0)
-    plt.title("Sky Model", size=20)
-    plt.savefig("Plots/SkyModel.png", transparent=False)
-    plt.close()
-
-def image_visibilities(grid):
+def fourier_transform_grid(grid):
     """
     Using the inverse fourier transform, converts the grid into an image
 
@@ -691,9 +689,8 @@ def image_visibilities(grid):
     image = np.abs(image)
     return np.real(image)
 
-
 def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name,
-                x_title, y_title, cell_size_error):
+x_title, y_title, cell_size_error):
     """
     Draws the image onto a figure, adds a color map to the side and draws circles
     for the declination.
