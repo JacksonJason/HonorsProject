@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 import scipy.constants
 import math
 from mpl_toolkits.mplot3d import Axes3D
@@ -10,6 +11,9 @@ import matplotlib.pylab as pl
 import Tigger
 
 def draw_matrix(matrix):
+    '''
+
+    '''
     plt.figure()
     plt.subplot(121)
     plt.set_cmap('viridis')
@@ -254,6 +258,7 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name):
     plt.savefig('Plots/' + name + 'grid.png', transparent=True)
     L = np.cos(dec_0) * np.sin(0)
     M = np.sin(dec_0) * np.cos(dec_0) - np.cos(dec_0) * np.sin(dec_0) * np.cos(0)
+
     image = image_visibilities(gridded)
     psf = np.ones ((np.array(uv_tracks).shape), dtype=complex)
     psf_grid, cell_size_error = grid(Nl, Nm, psf, cell_size_u, cell_size_v, uv, cell_size_l, cell_size_m)
@@ -261,8 +266,9 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name):
     scale_factor = psf_image[int(psf_image.shape[0]/2)][int(psf_image.shape[1]/2)]
     image /= scale_factor
     psf_image /= scale_factor
-    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"SkyModel", "l", "m", cell_size_error)
-    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name+"PSF", "l", "m", cell_size_error)
+
+    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " SkyModel", "l", "m", cell_size_error)
+    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l", "m", cell_size_error)
 
 def find_closest_power_of_two(number):
     s = 2
@@ -342,14 +348,26 @@ def image_visibilities(grid):
 
 def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, RA, DECLINATION, name, x_title, y_title, cell_size_error):
     img = plt.figure(figsize=(10,10))
-    plt.title("Reconstructed" + name,size=22)
+    plt.title("Reconstructed " + name,size=22)
     plt.set_cmap('nipy_spectral')
-    im_vis = plt.imshow(image, origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
+    # im_vis = plt.imshow(image, origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
+    #                                                     DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
+    axc = plt.gca()
+    im_vis = axc.imshow(image, origin='lower', extent=[RA - Nl / 2 * cell_size_l, RA + Nl / 2 * cell_size_l,
                                                         DECLINATION - Nm / 2 * cell_size_m, DECLINATION + Nm / 2 * cell_size_m])
+    for i in range(10,91,10):
+        d_ra = i-0
+        # increments of 10
+        radius = math.cos(i * np.pi/180) * math.sin(d_ra * np.pi/180) * 180/np.pi
+        circ = Circle((0, 0), radius, fill=False, alpha=1,color='k', lw=2)
+        axc.add_patch(circ)
+
     cbr = img.colorbar(im_vis)
     cbr.set_label('Jy per Beam',size=20)
     plt.xlabel(x_title,size=20)
     plt.ylabel(y_title,size=20)
+    plt.axvline(x=0,color='k')
+    plt.axhline(y=0,color='k')
     if cell_size_error:
         txt = "INVALID CELL SIZE"
         plt.figtext(0.5, 0.1, txt, wrap=True, horizontalalignment='center', fontsize=25, color='red')
