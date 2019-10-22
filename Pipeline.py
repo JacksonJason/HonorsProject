@@ -121,7 +121,7 @@ class pipeline(object):
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
 
             ut.plot_baseline(b, custom_L, custom_f, sha, eha, dec, "CUSTOM")
-            uv, uv_tracks, dec_0 = ut.plot_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, custom_layout)
+            uv, uv_tracks, dec_0 = ut.get_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, custom_layout)
             ut.image(uv, uv_tracks, cell_size, dec_0, res, "CUSTOM")
 
     @cherrypy.expose
