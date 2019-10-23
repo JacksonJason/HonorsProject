@@ -237,10 +237,11 @@ def get_visibilities(b_ENU, L, f, h0, h1, model_name, layout):
     :param layout: The antenna layout
     :type layout: numpy float array
 
-    :returns: The visibilities, the UV tracks, and the center declination
+    :returns: The visibilities, the UV tracks, and the center declination as well
+              as the center right ascention.
     """
     h = np.linspace(h0,h1,num=600)*np.pi/12
-    point_sources, l, m, dec, flux_sources = load_sky_model(model_name)
+    point_sources, l, m, dec, flux_sources, ra_0 = load_sky_model(model_name)
 
     plot_sky_model(l*(180/np.pi), m*(180/np.pi), flux_sources, "l [degrees]", "m [degrees]")
 
@@ -250,7 +251,7 @@ def get_visibilities(b_ENU, L, f, h0, h1, model_name, layout):
     plot_visibilities(u_d, v_d, uu, vv, point_sources)
     all_uv_tracks, all_uv = get_all_uv_and_uv_tracks(L, f, h, dec, point_sources, layout)
 
-    return all_uv, all_uv_tracks, dec
+    return all_uv, all_uv_tracks, dec, ra_0
 
 def load_sky_model(model_name):
     """
@@ -261,7 +262,7 @@ def load_sky_model(model_name):
 
     :returns: The point sources from the loaded sky model, the l coordinates of
               the points, the m coordinates of the points, the center declination,
-              the flux sources
+              the flux sources, and the center right ascention
     """
     model = Tigger.load(model_name)
     RA_sources = []
@@ -295,7 +296,7 @@ def load_sky_model(model_name):
     point_sources[:,2] = m[0:]
     dec = dec_0
 
-    return point_sources, l, m, dec_0, Flux_sources
+    return point_sources, l, m, dec_0, Flux_sources, ra_0_rad
 
 def plot_sky_model(l, m, Flux_sources, x, y):
     """
@@ -552,7 +553,7 @@ def get_all_uv_and_uv_tracks(L, f, h, dec, point_sources, layout):
 
     return all_uv_tracks, all_uv
 
-def image(uv, uv_tracks, cell_size, dec_0, res, name):
+def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid, ra_0=0):
     """
     Calculates the Resolusion from the cell size and the provided resolution,
     it then plots the baseline grid and applies the visibilities to a grid.
@@ -576,6 +577,12 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name):
 
     :param name: The name for the output image
     :type name: str
+
+    :param ra_0: The center right ascention
+    :type ra_0: float
+
+    :param showGrid: Whether or not to show the grid on the image
+    :type showGrid: boolean
 
     :returns: Nothing
     """
@@ -619,8 +626,8 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name):
     image /= scale_factor
     psf_image /= scale_factor
 
-    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " SkyModel", "l", "m", cell_size_error)
-    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l", "m", cell_size_error)
+    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " SkyModel", "l", "m", cell_size_error, dec_0, ra_0, showGrid)
+    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l", "m", cell_size_error, dec_0, ra_0, False)
 
 def grid(Nl, Nm, uv_tracks, uv, cell_size_l, cell_size_m):
     """
@@ -690,7 +697,7 @@ def fourier_transform_grid(grid):
     return np.real(image)
 
 def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name,
-x_title, y_title, cell_size_error):
+                x_title, y_title, cell_size_error, dec_0, ra_0, showGrid):
     """
     Draws the image onto a figure, adds a color map to the side and draws circles
     for the declination.
@@ -728,6 +735,15 @@ x_title, y_title, cell_size_error):
     :param cell_size_error: whether or not the cell size produced an error boolean
     :type cell_size_error: boolean
 
+    :param dec_0: The center declination
+    :type dec_0: float
+
+    :param ra_0: The center right ascention
+    :type ra_0: float
+
+    :param showGrid: Whether or not to show the grid on the image
+    :type showGrid: boolean
+
     :returns: Nothing
     """
     img = plt.figure(figsize=(10,10))
@@ -740,19 +756,25 @@ x_title, y_title, cell_size_error):
     im_vis = axc.imshow(image, origin='lower', extent=[L - Nl / 2 * cell_size_l, L + Nl / 2 * cell_size_l,
                                                         M - Nm / 2 * cell_size_m, M + Nm / 2 * cell_size_m])
 
-    for i in range(10,91,10):
-        d_ra = i-0
-        # increments of 10
-        radius = math.cos(i * np.pi/180) * math.sin(d_ra * np.pi/180) * 180/np.pi
-        circ = Circle((0, 0), radius, fill=False, alpha=1,color='k', lw=2)
-        axc.add_patch(circ)
+
+    if showGrid:
+        plt.axvline(x=0,color='k')
+        plt.axhline(y=0,color='k')
+        for i in range(10,91,10):
+            dec = i * np.pi/180
+            d_ra = 0
+
+            l = math.cos(dec) * math.sin(d_ra) * 180/np.pi
+            m = (math.sin(dec) * math.cos(dec_0) - math.cos(dec) * math.sin(dec_0) * math.cos(d_ra)) * 180/np.pi
+            radius = np.sqrt(l**2 + m**2)
+            circ = Circle((0, 0), radius, fill=False, alpha=1,color='k', lw=2)
+            axc.add_patch(circ)
 
     cbr = img.colorbar(im_vis)
     cbr.set_label('Jy per Beam',size=20)
     plt.xlabel(x_title,size=20)
     plt.ylabel(y_title,size=20)
-    plt.axvline(x=0,color='k')
-    plt.axhline(y=0,color='k')
+
 
     if cell_size_error:
         txt = "INVALID CELL SIZE"

@@ -20,10 +20,11 @@
           cell_size = $("#cell_size").val()
           resolusion = $("#resolusion").val()
           loc = $("#loc").val()
+          grid = $("#grid").is(':checked');
           cont = cell_size != "" && co != "" && loc != ""
 
           if (cont) {
-            $.post("/generate_graphs",{cell_size:cell_size, loc:loc})
+            $.post("/generate_graphs",{cell_size:cell_size, loc:loc, showGrid: grid})
              .done(function(string) {
 
                var unique = $.now();
@@ -57,11 +58,14 @@
           base = $("#baseline").val()
           cell_size = $("#cell_size").val()
           resolusion = $("#resolusion").val()
+          grid = $("#grid").is(':checked');
           cont = resolusion != "" && $("#input_file").val() != "" && $("#lsm_file").val()
                   != "" && base != "" && cell_size != ""
 
           if (cont) {
-            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(), lsm_file:$("#lsm_file").val(), baseline:base, cell_size:cell_size, res: resolusion})
+            $.post("/generate_custom_graphs",{input_file:$("#input_file").val(),
+                  lsm_file:$("#lsm_file").val(), baseline:base,
+                  cell_size:cell_size, res: resolusion, showGrid: grid})
              .done(function(string) {
 
                var unique = $.now();
@@ -164,9 +168,8 @@
 
     <d class="col-sm-10">
       <h1>{{ target }}</h1>
-      Baseline: <input type="text" name="baseline" id="baseline">
       Image Cell Size: <input type="text" name="cell_size" id="cell_size">
-      Image Resolusion: <input type="text" name="resolusion" id="resolusion">
+      Show Grid: <input type="checkbox" name="grid" value="1" id="grid">
     <br>
 
     <div class="panel-group" id="accordion">
@@ -229,6 +232,9 @@
            LSM File <input type="file" name="lsm_file" id="lsm_file" class="but">
          </label>
 
+         Baseline: <input type="text" name="baseline" id="baseline">
+         Image Resolution: <input type="text" name="resolusion" id="resolusion">
+
          <br>
 
          <button type="submit" id="generate_custom_graphs" class="btn btn-default btn-primary">Generate custom layout graphs</button><br>
@@ -273,7 +279,7 @@
      </div>
     </div>
     </d>
-    
+
     <div class="col-sm-1">
     </div>
 

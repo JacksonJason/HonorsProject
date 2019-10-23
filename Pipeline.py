@@ -69,7 +69,9 @@ class pipeline(object):
         return np.array(layoutJSON)
 
     @cherrypy.expose
-    def generate_custom_graphs(self, input_file=None, lsm_file=None, baseline=None, cell_size=None, res=None):
+    def generate_custom_graphs(self, input_file=None, lsm_file=None,
+                                baseline=None, cell_size=None, res=None,
+                                showGrid=False):
         """
         Called by the HTML page when the generate Custom graphs button is pressed.
         The HTML page sends the information entered in the fields to the function and it is
@@ -89,6 +91,9 @@ class pipeline(object):
         :type cell_size: str
 
         :param res: The resolution for the imaging process
+        :type: str
+
+        :param showGrid: Whether or not to show the grid on the image.
         :type: str
 
         :returns: nothing
@@ -121,11 +126,15 @@ class pipeline(object):
             dec = dec[0] + dec[1]/60. + dec[2]/3600.
 
             ut.plot_baseline(b, custom_L, custom_f, sha, eha, dec, "CUSTOM")
-            uv, uv_tracks, dec_0 = ut.get_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, custom_layout)
-            ut.image(uv, uv_tracks, cell_size, dec_0, res, "CUSTOM")
+            uv, uv_tracks, dec_0, ra_0 = ut.get_visibilities(b, custom_L, custom_f, sha, eha, "Sky_Models/" + lsm_file, custom_layout)
+            if showGrid == "true":
+                showGrid = True
+            else:
+                showGrid = False
+            ut.image(uv, uv_tracks, cell_size, dec_0, res, "CUSTOM", showGrid, ra_0)
 
     @cherrypy.expose
-    def generate_graphs(self, cell_size=None, loc=None):
+    def generate_graphs(self, cell_size=None, loc=None, showGrid=False):
         """
         Called by the HTML page when the generate Tart graphs button is pressed.
         The HTML page sends the information entered in the fields to the function and it is
@@ -135,6 +144,9 @@ class pipeline(object):
         :type cell_size: str
 
         :param loc: location, which telescope to use, New Zealand or South Africa
+        :type: str
+
+        :param showGrid: Whether or not to show the grid on the image.
         :type: str
 
         :returns: nothing
@@ -170,7 +182,11 @@ class pipeline(object):
                     all_uv_tracks.append(uv_tracks)
 
             res = 2 * 180/np.pi
-            ut.image(all_uv, all_uv_tracks, cell_size, 0, res, "TART")
+            if showGrid == "true":
+                showGrid = True
+            else:
+                showGrid = False
+            ut.image(all_uv, all_uv_tracks, cell_size, 0, res, "TART", showGrid)
 
 
     @cherrypy.expose
