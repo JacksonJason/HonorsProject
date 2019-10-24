@@ -1,16 +1,22 @@
 To test the pipeline functionality was implemented that allows the user to select their own interferometer array layout and sky model. The user can then generate an image that that interferometer would see if it were to observe that sky model. If the image comes out similar to the sky model then the user knows the pipeline is working as intended. An example is given below: \\
-Say the user were to select KAT7 as the interferometer and select this sky model: 
-\begin{center}
-    \includegraphics[scale=0.35]{images/SkyModel.png}
-\end{center}
+Say the user were to select KAT-7 as the interferometer and select the sky model in figure \ref{fig:line_model}
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.35]{images/TESTING_KAT7_LINEMODEL_SKY_MODEL.png}
+    \caption{}
+    \label{fig:line_model}
+\end{figure}
 % \begin{figure}[h!]
 %     \centering
 %     \includegraphics[scale=0.35]{images/SkyModel.png}
 % \end{figure}
-The testing framework will generate an image based off the interferometer and sky model, the output of this testing will be:
-\begin{center}
-    \includegraphics[scale=0.35]{images/ReconstructedCUSTOMSkyModel.png}
-\end{center}
+The testing framework will generate an image based off the interferometer and sky model, the output of this testing will be figure \ref{fig:line_model_recon}
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.35]{images/TESTING_KAT7_LINEMODEL_RECON.png}
+    \caption{}
+    \label{fig:line_model_recon}
+\end{figure}
 % \begin{figure}[h!]
 %     \centering
 %     \includegraphics[scale=0.4]{images/ReconstructedCUSTOMSkyModel.png}
