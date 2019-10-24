@@ -553,7 +553,7 @@ def get_all_uv_and_uv_tracks(L, f, h, dec, point_sources, layout):
 
     return all_uv_tracks, all_uv
 
-def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid, ra_0=0):
+def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid):
     """
     Calculates the Resolusion from the cell size and the provided resolution,
     it then plots the baseline grid and applies the visibilities to a grid.
@@ -577,9 +577,6 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid, ra_0=0):
 
     :param name: The name for the output image
     :type name: str
-
-    :param ra_0: The center right ascention
-    :type ra_0: float
 
     :param showGrid: Whether or not to show the grid on the image
     :type showGrid: boolean
@@ -626,8 +623,8 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid, ra_0=0):
     image /= scale_factor
     psf_image /= scale_factor
 
-    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " SkyModel", "l", "m", cell_size_error, dec_0, ra_0, showGrid)
-    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l", "m", cell_size_error, dec_0, ra_0, False)
+    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " SkyModel", "l", "m", cell_size_error, showGrid)
+    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l", "m", cell_size_error, False)
 
 def grid(Nl, Nm, uv_tracks, uv, cell_size_l, cell_size_m):
     """
@@ -697,7 +694,7 @@ def fourier_transform_grid(grid):
     return np.real(image)
 
 def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name,
-                x_title, y_title, cell_size_error, dec_0, ra_0, showGrid):
+                x_title, y_title, cell_size_error, showGrid):
     """
     Draws the image onto a figure, adds a color map to the side and draws circles
     for the declination.
@@ -735,11 +732,6 @@ def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name,
     :param cell_size_error: whether or not the cell size produced an error boolean
     :type cell_size_error: boolean
 
-    :param dec_0: The center declination
-    :type dec_0: float
-
-    :param ra_0: The center right ascention
-    :type ra_0: float
 
     :param showGrid: Whether or not to show the grid on the image
     :type showGrid: boolean
@@ -763,6 +755,7 @@ def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name,
         for i in range(10,91,10):
             dec = i * np.pi/180
             d_ra = 0
+            dec_0 = 0
 
             l = math.cos(dec) * math.sin(d_ra) * 180/np.pi
             m = (math.sin(dec) * math.cos(dec_0) - math.cos(dec) * math.sin(dec_0) * math.cos(d_ra)) * 180/np.pi

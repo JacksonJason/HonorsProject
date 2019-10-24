@@ -131,7 +131,7 @@ class pipeline(object):
                 showGrid = True
             else:
                 showGrid = False
-            ut.image(uv, uv_tracks, cell_size, dec_0, res, "CUSTOM", showGrid, ra_0)
+            ut.image(uv, uv_tracks, cell_size, dec_0, res, "CUSTOM", showGrid)
 
     @cherrypy.expose
     def generate_graphs(self, cell_size=None, loc=None, showGrid=False):
