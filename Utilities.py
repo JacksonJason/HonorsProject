@@ -9,6 +9,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Ellipse
 import matplotlib.pylab as pl
 import Tigger
+from matplotlib import rc
+rc('text', usetex=True)
 
 def find_closest_power_of_two(number):
     """
@@ -185,9 +187,10 @@ def UVellipse(u,v,a,b,v0, name):
     ax.plot(u,v,"b")
     ax.plot(-u,-v,"r")
     ax.grid(True)
-    plt.title("UV Coverage", size=20)
-    plt.xlabel("u", size=18)
-    plt.ylabel("v", size=18)
+    plt.title("UV Coverage", size=26)
+    plt.xlabel("u", size=22)
+    plt.ylabel("v", size=22)
+    ax.tick_params(labelsize=20)
     plt.savefig('Plots/' + name + 'UVCoverage.png', transparent=True)
     plt.close()
 
@@ -203,12 +206,14 @@ def plot_array(antennas, name):
 
     :returns: Nothing
     """
-    plt.figure()
+    plt.figure(figsize=(10,10))
     plt.scatter(antennas[:,0], antennas[:,1])
     plt.grid(True)
-    plt.xlabel('E-W [m]')
-    plt.ylabel('N-S [m]')
-    plt.title(name + ' Array Layout')
+    plt.xlabel('E-W [m]', size=24)
+    plt.ylabel('N-S [m]', size=24)
+    plt.title(name + ' Array Layout', size=26)
+    ax = plt.gca()
+    ax.tick_params(labelsize=22)
     plt.savefig('Plots/' + name + 'AntennaLayout.png', transparent=True)
     plt.close()
 
@@ -317,10 +322,11 @@ def plot_sky_model(l, m, Flux_sources, x, y):
     :param y: The name for the y axis
     :type y: str
     """
-    fig = plt.figure(figsize=(10,10))
+    fig = plt.figure(figsize=(12,8))
     ax = fig.add_subplot(111)
-    plt.xlabel(x, size=18)
-    plt.ylabel(y, size=18)
+    plt.xlabel(x, size=24)
+    plt.ylabel(y, size=24)
+    ax.tick_params(labelsize=22)
     max_flux = max(Flux_sources)
 
     if max_flux > 1:
@@ -335,7 +341,7 @@ def plot_sky_model(l, m, Flux_sources, x, y):
     plt.scatter(l,m,c=colour,s=8)
     ax.set_facecolor('xkcd:black')
     fig.patch.set_alpha(0)
-    plt.title("Sky Model", size=20)
+    plt.title("Sky Model", size=26)
     plt.savefig("Plots/SkyModel.png", transparent=False)
     plt.close()
 
@@ -451,15 +457,19 @@ def plot_uv_tracks(uv_tracks):
     """
     plt.subplot(121)
     plt.plot(uv_tracks.real)
-    plt.xlabel("Timeslots")
-    plt.ylabel("Jy")
-    plt.title("Real: sampled visibilities")
+    plt.xlabel("Timeslots", size=18)
+    plt.ylabel("Jy", size=18)
+    plt.title("Real: sampled visibilities", size=18)
 
     plt.subplot(122)
     plt.plot(uv_tracks.imag)
-    plt.xlabel("Timeslots")
-    plt.title("Imag: sampled visibilities")
+    plt.xlabel("Timeslots", size=18)
+    plt.title("Imag: sampled visibilities", size=18)
     plt.savefig('Plots/SampledVisibilities.png', transparent=True)
+
+    axc = plt.gca()
+    axc.tick_params(labelsize=16)
+
     plt.close()
 
 def plot_visibilities(u, v, uu, vv, point_sources):
@@ -500,9 +510,9 @@ def plot_visibilities(u, v, uu, vv, point_sources):
     plt.plot(u,v,"k")
     plt.xlim([-1*(np.amax(np.abs(u)))-10, np.amax(np.abs(u))+10])
     plt.ylim(-1*(np.amax(abs(v)))-10, np.amax(abs(v))+10)
-    plt.xlabel("u")
-    plt.ylabel("v")
-    plt.title("Real part of visibilities")
+    plt.xlabel("u", size=18)
+    plt.ylabel("v", size=18)
+    plt.title("Real part of visibilities", size=18)
 
     plt.subplot(122)
     plt.imshow(zz.imag,extent=[-1*(np.amax(np.abs(u)))-10, np.amax(np.abs(u))+10,-1*(np.amax(abs(v)))-10, \
@@ -510,9 +520,11 @@ def plot_visibilities(u, v, uu, vv, point_sources):
     plt.plot(u,v,"k")
     plt.xlim([-1*(np.amax(np.abs(u)))-10, np.amax(np.abs(u))+10])
     plt.ylim(-1*(np.amax(abs(v)))-10, np.amax(abs(v))+10)
-    plt.xlabel("u")
-    plt.title("Imaginary part of visibilities")
+    plt.xlabel("u", size=18)
+    plt.title("Imaginary part of visibilities", size=18)
     plt.savefig('Plots/Visibilities.png', transparent=True)
+    ax = plt.gca()
+    ax.tick_params(labelsize=16)
     plt.close()
 
 def get_all_uv_and_uv_tracks(L, f, h, dec, point_sources, layout):
@@ -598,16 +610,16 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid):
     rad_d_l = cell_size_l * (np.pi/180)
     rad_d_m = cell_size_m * (np.pi/180)
 
-    cell_size_u = 1 / (2 * Nl * rad_d_l)
-    cell_size_v = 1 / (2 * Nm * rad_d_m)
-
     gridded, cell_size_error = grid(Nl, Nm, uv_tracks, uv, cell_size_l, cell_size_m)
-    img = plt.figure(figsize=(10,10))
+    img = plt.figure(figsize=(8,8))
 
-    plt.title("Baseline Grid", size=22)
+    plt.title("Baseline Grid", size=26)
     plt.set_cmap('nipy_spectral')
     im = plt.imshow(np.real(np.abs(gridded)), origin='lower')
-    plt.axis('off')
+    plt.ylabel("v [rad$^{-1}$]",size=24)
+    plt.xlabel("u [rad$^{-1}$]", size=24)
+    ax = plt.gca()
+    ax.tick_params(labelsize=22)
     plt.savefig('Plots/' + name + 'grid.png', transparent=True)
 
     # Find the center of the view.
@@ -623,8 +635,8 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid):
     image /= scale_factor
     psf_image /= scale_factor
 
-    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " SkyModel", "l", "m", cell_size_error, showGrid)
-    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l", "m", cell_size_error, False)
+    draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " SkyModel", "l [degrees]", "m [degrees]", cell_size_error, showGrid)
+    draw_image(psf_image, Nl, Nm, cell_size_l, cell_size_m, L, M, name + " PSF", "l [degrees]", "m [degrees]", cell_size_error, False)
 
 def grid(Nl, Nm, uv_tracks, uv, cell_size_l, cell_size_m):
     """
@@ -738,8 +750,8 @@ def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name,
 
     :returns: Nothing
     """
-    img = plt.figure(figsize=(10,10))
-    plt.title("Reconstructed " + name,size=22)
+    img = plt.figure(figsize=(9,8))
+    plt.title("Reconstructed " + name,size=26)
     plt.set_cmap('nipy_spectral')
 
     # im_vis = plt.imshow(image, origin='lower', extent=[L - Nl / 2 * cell_size_l, L + Nl / 2 * cell_size_l,
@@ -764,9 +776,11 @@ def draw_image(image, Nl, Nm, cell_size_l, cell_size_m, L, M, name,
             axc.add_patch(circ)
 
     cbr = img.colorbar(im_vis)
-    cbr.set_label('Jy per Beam',size=20)
-    plt.xlabel(x_title,size=20)
-    plt.ylabel(y_title,size=20)
+    cbr.set_label('Jy per Beam',size=24)
+    cbr.ax.tick_params(labelsize=22)
+    plt.xlabel(x_title,size=24)
+    plt.ylabel(y_title,size=24)
+    axc.tick_params(labelsize=22)
 
 
     if cell_size_error:
