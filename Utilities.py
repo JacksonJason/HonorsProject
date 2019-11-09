@@ -663,6 +663,7 @@ def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid):
     ax = plt.gca()
     ax.tick_params(labelsize=22)
     plt.savefig('Plots/' + name + 'grid.png', transparent=True)
+    plt.close()
 
     # Find the center of the view.
     L = np.cos(dec_0) * np.sin(0)

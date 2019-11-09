@@ -10,9 +10,25 @@ from PIL import Image, ImageDraw
 import glob
 import shutil
 import os
+import re
 env = Environment(loader=FileSystemLoader('html'))
 
 class pipeline(object):
+
+    def atoi(self, text):
+        """
+        https://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside
+        """
+        return int(text) if text.isdigit() else text
+
+    def natural_keys(self, text):
+        """
+        alist.sort(key=natural_keys) sorts in human order
+        http://nedbatchelder.com/blog/200712/human_sorting.html
+        (See Toothy's implementation in the comments)
+        https://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside
+        """
+        return [ self.atoi(c) for c in re.split(r'(\d+)', text) ]
 
     def make_vis_matrix(self, loc):
         """
@@ -200,25 +216,31 @@ class pipeline(object):
             os.mkdir(cwd + "/GIF/")
 
         while round(time.time() * 1000) - start_time < int(duration):
-            begin_minute = round(time.time() * 1000)
-            self.generate_graphs(cell_size, loc, showGrid)
+            try:
+                begin_minute = round(time.time() * 1000)
+                self.generate_graphs(cell_size, loc, showGrid)
 
-            shutil.copy("Plots/ReconstructedTART SkyModel.png", cwd + "/GIF/" + str(counter) + ".png")
-            counter += 1
+                shutil.copy("Plots/ReconstructedTART SkyModel.png", cwd + "/GIF/" + str(counter) + ".png")
+                counter += 1
 
-            remaining_ms = 60000 - (round(time.time() * 1000) - begin_minute)
-            if remaining_ms > 0:
-                time.sleep(remaining_ms / 1000)
-            print(counter + "Minutes into GIF")
+                remaining_ms = 30000 - (round(time.time() * 1000) - begin_minute)
+                if remaining_ms > 0:
+                    time.sleep(remaining_ms / 1000)
+                print(str(counter / 2) + " Minutes into GIF")
+
+            except:
+                print("Error on " + str(counter))
 
         frames = []
         images = [f for f in glob.glob(cwd + "/GIF/*.png", recursive=False)]
+        images.sort(key=self.natural_keys)
+
         for im in images:
             new_frame = Image.open(im)
             frames.append(new_frame)
             counter += 1
 
-        frames[0].save(cwd + "/GIF/observation_period.gif", format='GIF', append_images=frames[1:], save_all=True, duration=150, loop=0)
+        frames[0].save(cwd + "/GIF/observation_period.gif", format='GIF', append_images=frames[1:], save_all=True, duration=200, loop=0)
 
         dir = os.listdir(cwd + "/GIF")
         for item in dir:
