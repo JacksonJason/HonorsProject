@@ -565,6 +565,48 @@ def get_all_uv_and_uv_tracks(L, f, h, dec, point_sources, layout):
 
     return all_uv_tracks, all_uv
 
+def get_TART_uv_and_tracks(layout, L, f, visibilities):
+    """
+    Gets all of the UV tracks and UV coordinates for all of the baselines
+
+    :param layout: The layout of the interferometer
+    :type layout: float array
+
+    :param L: The latitude of the interferometer
+    :type L: float
+
+    :param f: the frequency of the interferometer
+    :type f: float
+
+    :param visibilities: The visibilities from TART
+    :type visibilities: complex float array
+
+    :returns: All of the UV tracks and coordinates across all the baselines for TART
+    """
+    all_uv = []
+    all_uv_tracks = []
+    for i in range(len(layout)):
+        for j in range(i+1, len(layout)):
+            b = layout[j] - layout[i]
+            u_d, v_d =  get_uv_tracks(b, L, f, 0, L)
+            uv = []
+            uv.append([u_d, v_d])
+            uv = np.array(uv)
+            all_uv.append(uv)
+            uv_tracks = [visibilities[i][j]]
+            all_uv_tracks.append(uv_tracks)
+
+            b = layout[i] - layout[j]
+            u_d, v_d =  get_uv_tracks(b, L, f, 0, L)
+            uv = []
+            uv.append([u_d, v_d])
+            uv = np.array(uv)
+            all_uv.append(uv)
+            uv_tracks = [visibilities[j][i]]
+            all_uv_tracks.append(uv_tracks)
+    return all_uv, all_uv_tracks
+
+
 def image(uv, uv_tracks, cell_size, dec_0, res, name, showGrid):
     """
     Calculates the Resolusion from the cell size and the provided resolution,

@@ -157,35 +157,14 @@ class pipeline(object):
             visibilities = self.make_vis_matrix(loc)
             ut.plot_array(layout, "TART")
 
-            # dec_0 is 0 as it is TART
-            all_uv = []
-            all_uv_tracks = []
-
-            for i in range(len(layout)):
-                for j in range(i+1, len(layout)):
-                    b = layout[j] - layout[i]
-                    u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
-                    uv = []
-                    uv.append([u_d, v_d])
-                    uv = np.array(uv)
-                    all_uv.append(uv)
-                    uv_tracks = [visibilities[i][j]]
-                    all_uv_tracks.append(uv_tracks)
-
-                    b = layout[i] - layout[j]
-                    u_d, v_d =  ut.get_uv_tracks(b, L, f, 0, L)
-                    uv = []
-                    uv.append([u_d, v_d])
-                    uv = np.array(uv)
-                    all_uv.append(uv)
-                    uv_tracks = [visibilities[j][i]]
-                    all_uv_tracks.append(uv_tracks)
-
+            all_uv, all_uv_tracks = ut.get_TART_uv_and_tracks(layout, L, f, visibilities)
+            
             res = 2 * 180/np.pi
             if showGrid == "true":
                 showGrid = True
             else:
                 showGrid = False
+
             ut.image(all_uv, all_uv_tracks, cell_size, 0, res, "TART", showGrid)
 
 
