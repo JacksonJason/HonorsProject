@@ -141,13 +141,13 @@ Aliasing is an effect that results in misidentification of signals and introduce
 
 \subsubsection{Gridding}
 Gridding is the process of placing the visibilities that have been received by the interferometer and placing them onto a UV plane.\\
-The visibilities in the UV plane must be placed onto an image grid which is a two dimensional grid with $N_l \times N_m$ representing the size. Each pixel in the grid has a cell size of $(\Delta \theta_l, \Delta \theta_m)$. The UV tracks are scaled down to the image size which means the the $\Delta u$ and $\Delta v$ are equivalent to the $\Delta l$  and $\Delta m$. In order to calculate the size of the image from the cell size, the following equation must be applied. 
+The visibilities in the UV plane must be placed onto an image grid which is a two dimensional grid with $N_l \times N_m$ representing the size. Each pixel in the grid has a cell size of $(\Delta \theta_l, \Delta \theta_m)$. The UV tracks are scaled down to the image size which means the the $\Delta u$ and $\Delta v$ are equivalent to the $\Delta l$  and $\Delta m$. This means that the visibilities can be directly applied to the grid. In order to calculate the size of the image from the cell size, the following equation must be applied. 
 $$N_l = \frac{\theta_l}{\Delta \theta_l}$$
 $$N_m = \frac{\theta_m}{\Delta \theta_m}$$
 Where,  $\Delta \theta_l\sim \Delta l$ , $\Delta \theta_m \sim \Delta m$, and $\Delta l = \cos{\Delta \theta_l}$, $\Delta m = \cos{\Delta \theta_m}$. The cell size that is chosen must satisfy the Nyquist theorem in order to avoid aliasing.\\
 The visibilities are placed on the grid by convolving the visibilities along the sampling tracks with a function. This is then discretised onto regular points by using a shah function.\\
 $V_\text{gridded}[u,v]=[(\mathcal{V}(u,v) \, S(u,v))
-\circ C(u,v)] \, III[u,v]$,\\
+\circ C(u,v)] \, III[u,v]$,
 where $\mathcal{V}(u,v)$ is the visibility's, $ S(u,v)$ is
 the sampling tracks, $C(u,v)$ is the convolution function, and $III[u,v]$ is the shah function.\\
 The inverse Fourier Transform can be applied to this grid in order to obtain an image grid, which represents the sky above the interferometer.
