@@ -5,6 +5,11 @@ import cherrypy
 import os
 import json
 from jinja2 import Environment, FileSystemLoader
+import time
+from PIL import Image, ImageDraw
+import glob
+import shutil
+import os
 env = Environment(loader=FileSystemLoader('html'))
 
 class pipeline(object):
@@ -91,10 +96,10 @@ class pipeline(object):
         :type cell_size: str
 
         :param res: The resolution for the imaging process
-        :type: str
+        :type res: str
 
         :param showGrid: Whether or not to show the grid on the image.
-        :type: str
+        :type showGrid: str
 
         :returns: nothing
         """
@@ -144,10 +149,10 @@ class pipeline(object):
         :type cell_size: str
 
         :param loc: location, which telescope to use, New Zealand or South Africa
-        :type: str
+        :type loc: str
 
         :param showGrid: Whether or not to show the grid on the image.
-        :type: str
+        :type showGrid: str
 
         :returns: nothing
         """
@@ -158,7 +163,7 @@ class pipeline(object):
             ut.plot_array(layout, "TART")
 
             all_uv, all_uv_tracks = ut.get_TART_uv_and_tracks(layout, L, f, visibilities)
-            
+
             res = 2 * 180/np.pi
             if showGrid == "true":
                 showGrid = True
@@ -166,6 +171,59 @@ class pipeline(object):
                 showGrid = False
 
             ut.image(all_uv, all_uv_tracks, cell_size, 0, res, "TART", showGrid)
+
+    @cherrypy.expose
+    def generate_gif(self, cell_size=None, loc=None, showGrid=False, duration=0):
+        """
+        Called by the HTML page when the generate Tart GIF button is pressed.
+        The HTML page sends the information entered in the fields to the function and it is
+        executed. It generates a gif in the backend.
+
+        :param cell_size: The cell size for the imaging process
+        :type cell_size: str
+
+        :param loc: location, which telescope to use, New Zealand or South Africa
+        :type loc: str
+
+        :param showGrid: Whether or not to show the grid on the image.
+        :type showGrid: str
+
+        :param duration: The observation period for the GIF
+        :type duration: str
+
+        :returns: nothing
+        """
+        start_time = round(time.time() * 1000)
+        cwd = os.getcwd()
+        counter = 0
+        if not os.path.exists(cwd + "/GIF/"):
+            os.mkdir(cwd + "/GIF/")
+
+        while round(time.time() * 1000) - start_time < int(duration):
+            begin_minute = round(time.time() * 1000)
+            self.generate_graphs(cell_size, loc, showGrid)
+
+            shutil.copy("Plots/ReconstructedTART SkyModel.png", cwd + "/GIF/" + str(counter) + ".png")
+            counter += 1
+
+            remaining_ms = 60000 - (round(time.time() * 1000) - begin_minute)
+            if remaining_ms > 0:
+                time.sleep(remaining_ms / 1000)
+            print(counter + "Minutes into GIF")
+
+        frames = []
+        images = [f for f in glob.glob(cwd + "/GIF/*.png", recursive=False)]
+        for im in images:
+            new_frame = Image.open(im)
+            frames.append(new_frame)
+            counter += 1
+
+        frames[0].save(cwd + "/GIF/observation_period.gif", format='GIF', append_images=frames[1:], save_all=True, duration=150, loop=0)
+
+        dir = os.listdir(cwd + "/GIF")
+        for item in dir:
+            if item.endswith(".png"):
+                os.remove(os.path.join(cwd + "/GIF", item))
 
 
     @cherrypy.expose

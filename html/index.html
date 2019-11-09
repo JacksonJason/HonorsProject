@@ -16,12 +16,11 @@
       $(document).ready(function() {
         $("#generate_graphs").click(function(e) {
 
-          co = $("#cods").val()
           cell_size = $("#cell_size").val()
           resolusion = $("#resolusion").val()
           loc = $("#loc").val()
           grid = $("#grid").is(':checked');
-          cont = cell_size != "" && co != "" && loc != ""
+          cont = cell_size != "" && loc != ""
 
           if (cont) {
             $.post("/generate_graphs",{cell_size:cell_size, loc:loc, showGrid: grid})
@@ -38,6 +37,37 @@
 
                alert("SUCCESS: Graphs Generated");
             });
+          } else {
+            alert("FAILURE: Please select all files and fill in all fields")
+          }
+
+          e.preventDefault();
+        });
+      });
+
+      /*
+      The below code connects to the CherryPy server and runs the TART pipeline,
+      it takes all the information from the text fields and combo boxes and
+      submits it the the function for the pipeline. It then generates a gif over the observation time
+      */
+      $(document).ready(function() {
+        $("#generate_gif").click(function(e) {
+
+          cell_size = $("#cell_size").val()
+          loc = $("#loc").val()
+          grid = $("#grid").is(':checked');
+          time_h = $("#gif_duration_h").val()
+          time_m = $("#gif_duration_m").val()
+          time_s = $("#gif_duration_s").val()
+          time = (time_h * 3600000) + (time_m * 60000) + (time_s * 1000)
+          cont = cell_size != "" && loc != "" && time != ""
+
+          if (cont) {
+            $.post("/generate_gif",{cell_size:cell_size, loc:loc, showGrid: grid, duration: time})
+             .done(function(string) {
+               alert("SUCCESS: GIF Generated");
+            });
+
           } else {
             alert("FAILURE: Please select all files and fill in all fields")
           }
@@ -158,6 +188,15 @@
         top: 0;
       }
 
+      .time {
+        font: inherit;
+        width: 8ch;
+      }
+
+      .field {
+        width: 10ch;
+      }
+
     </style>
 
   {% endblock %}
@@ -168,7 +207,7 @@
 
     <d class="col-sm-10">
       <h1>{{ target }}</h1>
-      Image Cell Size: <input type="text" name="cell_size" id="cell_size">
+      Image Cell Size: <input type="text" name="cell_size" id="cell_size" class="field">
       Show Grid: <input type="checkbox" name="grid" value="1" id="grid">
     <br>
 
@@ -187,6 +226,12 @@
             <option value="1">ZA</option>
             <option value="2">NZ</option>\
           </select>
+         <br>
+         <button type="submit" id="generate_gif" class="btn btn-default btn-primary" style="margin-top: 0px;">Generate TART GIF</button>
+         GIF Duration:
+         <input id='gif_duration_h' name='h' type='number' min='0' max='24' class="time"> h
+         <input id='gif_duration_m' name='m' type='number' min='0' max='59' class="time"> m
+         <input id='gif_duration_s' name='s' type='number' min='0' max='59' class="time"> s
          <br>
 
          <div class="col-sm-6 gr">
@@ -232,8 +277,8 @@
            LSM File <input type="file" name="lsm_file" id="lsm_file" class="but">
          </label>
 
-         Baseline: <input type="text" name="baseline" id="baseline">
-         Image Field of view: <input type="text" name="resolusion" id="resolusion">
+         Baseline: <input type="text" name="baseline" id="baseline" class="field">
+         Image Field of view: <input type="text" name="resolusion" id="resolusion" class="field">
 
          <br>
 
