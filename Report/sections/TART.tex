@@ -2,12 +2,12 @@
 The Transient Array Radio Telescope, or TART, is a 24 element aperture synthesis radio telescope. It was originally designed at the University of Otago, New Zealand as a test bench for creating new imaging algorithms. It is also a survey instrument for transient events\cite{DESIGN_TART}. The interferometer operates at a frequency of 1.575 GHz on the L1 band, which is free from interference.
 \\
 TART consists of a RESTful API, this allows the user to send HTTP requests to the API and receive information back, such as the current visibilities of the Interferometer or the Latitude and frequency that the Interferometer is operating at.\cite{CALIBRATION_TART}\\
-Both TART's hardware and software is part of an open source project and the University of Stellenbosch has one installed on the Electrical Engineering building roof, under the supervision of Dr DJ Ludick.
+Both TART's hardware and software is part of an open source project and the University of Stellenbosch has one installed on the Electrical Engineering building roof, under the supervision of Dr. DJ Ludick.
 % Ask Dr. Ludick for a paper
 % Explain what TART is
 
 \subsection{How it works}
-TART consists of 4 tiles that are $1m^2$ in size, each with 6 antennas mounted on them, Each antenna is mounted on a 50cm length of PVC pipe. The antennas connect to a radio hub module which is in turn connected to a central telescope control board\cite{LAYOUT_TART}.
+TART consists of 4 tiles that are 1m$^2$ in size, each with 6 antennas mounted on them, Each antenna is mounted on a 50cm length of PVC pipe. The antennas connect to a radio hub module which is in turn connected to a central telescope control board\cite{LAYOUT_TART}.
 
 The telescope control board, or base station, consists of a power supply, a local oscillator, a FPGA and a miniature ARM based computer. The base station also contains a Raspberry Pi Model 2 which is used for data processing and storage. The base station also supplies power to all of the radio hub modules\cite{CALIBRATION_AND_SYNTHESIS_TART}.
 
